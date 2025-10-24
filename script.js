@@ -12,9 +12,9 @@ const questions = [
         maybe: 3
     },
     {//R1B-Q2
-        question: "Patients without an ability to communicate do not have capacity for making medical decisions. Would you like to continue evaluating patient's potential capacity? MORE INFO>> Two examples of a patient being unable to communicate would be if the patient is unable to respond or unconsious. Please evaluate for alternative modes of commiunication if possible",
+        question: "Patients without an ability to communicate do not have capacity for making medical decisions. Would you like to continue evaluating patient's potential capacity (Two examples of a patient being unable to communicate would be if the patient is unable to respond or unconsious. Please evaluate for alternative modes of commiunication if possible)?",
         yes: 3,
-        no: 3,
+        no: false,
         maybe: -1
     },
     {//R1C-Q2
