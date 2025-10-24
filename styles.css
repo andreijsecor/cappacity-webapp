@@ -112,7 +112,7 @@ body {
     color: white;
 }
 
-.btn-yes:hover {
+.btn-yes:hover:not(:disabled) {
     transform: translateY(-2px);
     box-shadow: 0 10px 20px rgba(102, 126, 234, 0.3);
 }
@@ -123,7 +123,7 @@ body {
     border: 2px solid #e1e5e9;
 }
 
-.btn-maybe:hover {
+.btn-maybe:hover:not(:disabled) {
     background: #e9ecef;
     transform: translateY(-2px);
 }
@@ -134,9 +134,14 @@ body {
     border: 2px solid #e53935;
 }
 
-.btn-no:hover {
+.btn-no:hover:not(:disabled) {
     transform: translateY(-2px);
     box-shadow: 0 10px 20px rgba(102, 126, 234, 0.3);
+}
+
+.btn:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
 }
 
 .answer-display {

@@ -49,6 +49,9 @@ const noCapacity = "Your patient cannot make a reasoned decision about their med
 let currentQuestionIndex = 0;
 
 function submitAnswer(answerIndex) {
+    const answerDisplay = document.getElementById('answerDisplay');
+    const answerText = document.getElementById('answerText');
+
     switch(answerIndex) {
         case 0:
             nextIndex = questions[currentQuestionIndex].yes;
@@ -61,9 +64,13 @@ function submitAnswer(answerIndex) {
             break;
     }
     if (nextIndex === true) {
-        alert(yesCapacity);   
+        answerText.textContent = yesCapacity;
+        answerDisplay.classList.add('show');
+        document.querySelectorAll('.btn').forEach(btn => btn.disabled = true);
     } else if (nextIndex === false) {
-        alert(noCapacity);
+        answerText.textContent = noCapacity;
+        answerDisplay.classList.add('show');
+        document.querySelectorAll('.btn').forEach(btn => btn.disabled = true);
     } else if (nextIndex === -1) {
         alert('Error: tree behavior not implemented.');
     } else {
@@ -92,19 +99,5 @@ function getNewQuestion() {
         questionElement.style.opacity = '1';
     }, 200);
 }
-
-// Add some interactive effects
-document.addEventListener('DOMContentLoaded', function() {
-    const answerInput = document.getElementById('answerInput');
-    
-    // Add focus effect
-    answerInput.addEventListener('focus', function() {
-        this.parentElement.style.transform = 'scale(1.02)';
-    });
-    
-    answerInput.addEventListener('blur', function() {
-        this.parentElement.style.transform = 'scale(1)';
-    });
-});
 
 getNewQuestion();
