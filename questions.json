@@ -1,4 +1,5 @@
 {
+    "startIndex": 0,
     "questions": [
         {
             "_qname": "Q1",
@@ -9,7 +10,7 @@
         },
         {
             "_qname": "R1A-Q2",
-            "question": ["Is your patient able to communicate a choice? (Is your patient able to respond to you and express a decision?)"],
+            "question": ["Can the patient clearly tell you their preferred choice of medical treatment?"],
             "yes": true,
             "no": 3,
             "maybe": 3,

@@ -1,14 +1,14 @@
 const questionPath = './questions.json';
 
-const questionsPromise = fetch(questionPath).then(response => response.json()).then(data => data.questions);
+const questionsPromise = fetch(questionPath).then(response => response.json());
 
 const passDefaultMsg = "Your patient has demonstrated an ability to communicate a choice, understand the relavant information, appreciate the situation and its consequences, and identify rational reasoning for making their decisions. Therefore, to a reasonable degree of medical certainty, your patient has the capacity to make decisions with informed consent."
 const failDefaultMsg = "Your patient cannot make a reasoned decision about their medical treatment."
 
-let currentQuestionIndex = 0;
+currentQuestionIndex = -1;
 
 async function submitAnswer(answerIndex) {
-    const questions = await questionsPromise;
+    const questions = (await questionsPromise).questions;
     const answerDisplay = document.getElementById('answerDisplay');
     const answerText = document.getElementById('answerText');
 
@@ -44,10 +44,14 @@ async function submitAnswer(answerIndex) {
 }
 
 async function getNewQuestion() {
-    const questions = await questionsPromise;
+    const questions = (await questionsPromise).questions;
     const questionElement = document.querySelector('.question');
     const answerDisplay = document.getElementById('answerDisplay');
     const answerInput = document.getElementById('answerInput');
+
+    if (currentQuestionIndex === -1) {
+        currentQuestionIndex = (await questionsPromise).startIndex;
+    }
     
     // Hide current answer
     answerDisplay.classList.remove('show');
