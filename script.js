@@ -9,7 +9,8 @@ const questions = [
         question: ["Is your patient able to communicate a choice? (Is your patient able to respond to you and express a decision?)"],
         yes: true,
         no: 3,
-        maybe: 3
+        maybe: 3,
+        passMsg: "Your patient has demonstrated an ability to communicate a choice, understand the relavant information, appreciate the situation and its consequences, and identify rational reasoning for making their decisions. Therefore, to a reasonable degree of medical certainty, your patient has the capacity to make decisions with informed consent."
     },
     {//R1B-Q2
         question: ["Patients without an ability to communicate do not have capacity for making medical decisions. Would you like to continue evaluating patient's potential capacity (Two examples of a patient being unable to communicate would be if the patient is unable to respond or unconsious. Please evaluate for alternative modes of commiunication if possible)?",],
@@ -27,24 +28,28 @@ const questions = [
         question: ["Can your patient adequately answer the following questions: What did your doctor [or I] tell you about:", "- The problem with your health now", "- The recommended treatment", "- The possible benefits and risks (or discomforts) of the treatment", "- Any alternative treatments and their risks and benefits", "- The risks and benefits of no treatment"],
         yes: 5,
         no: false,
-        maybe: -1
+        maybe: -1,
+        failMsg: "Individuals who do not understand the relevant information do not have the capacity for medical decision making."
     },
     {//R1C-R2A-R3A-Q4
         question: ["Is your patient able to describe their understanding of their medical condition, proposed treatment, and likely outcomes by answering the following questions:", "- What do you believe is wrong with your health now?", "- Do you believe that you need some kind of treatment?", "- What is treatment likely to do for you?", "- What makes you believe it will have that effect?", "- What do you believe will happen if you are not treated?", "- Why do you think your doctor has [or I have] recommended this treatment?"],
         yes: 6,
         no: false,
-        maybe: -1
+        maybe: -1,
+        failMsg: "Individuals who cannot demonstrate rational manipulation of the information do not have capacity (Individuals who cannot identify rational reasoning for making their decisions lack capacity.)"
     },
     {//R1C-R2A-R3A-R4A-Q5
         question: ["Can your patient engage in a rational process of manipulating the relevant information by answering the following questions:", "- How did you decide to accept or reject the recommended treatment?", "- What makes [chosen option] better than [alternative option]?"],
         yes: true,
         no: false,
-        maybe: -1
+        maybe: -1,
+        passMsg: "Your patient has demonstrated an ability to communicate a choice, understand the relavant information, appreciate the situation and its consequences, and identify rational reasoning for making their decisions. Therefore, to a reasonable degree of medical certainty, your patient has the capacity to make decisions with informed consent.",
+        failMsg: "Individuals who cannot demonstrate rational manipulation of the information do not have capacity (Individuals who cannot identify rational reasoning for making their decisions lack capacity.)"
     },
 ];
 
-const yesCapacity = "Your patient has demonstrated an ability to communicate a choice, understand the relavant information, appreciate the situation and its consequences, and identify rational reasoning for making their decisions. Therefore, to a reasonable degree of medical certainty, your patient has the capacity to make decisions with informed consent."
-const noCapacity = "Your patient cannot make a reasoned decision about their medical treatment."
+const passDefaultMsg = "Your patient has demonstrated an ability to communicate a choice, understand the relavant information, appreciate the situation and its consequences, and identify rational reasoning for making their decisions. Therefore, to a reasonable degree of medical certainty, your patient has the capacity to make decisions with informed consent."
+const failDefaultMsg = "Your patient cannot make a reasoned decision about their medical treatment."
 
 const preIndentChars = ["-"]
 
@@ -66,11 +71,15 @@ function submitAnswer(answerIndex) {
             break;
     }
     if (nextIndex === true) {
-        answerText.textContent = yesCapacity;
+        answerText.textContent = questions[currentQuestionIndex].passMsg ?? passDefaultMsg;
+        answerText.classList.add('pass');
+        answerDisplay.classList.add('pass');
         answerDisplay.classList.add('show');
         document.querySelectorAll('.btn').forEach(btn => btn.disabled = true);
     } else if (nextIndex === false) {
-        answerText.textContent = noCapacity;
+        answerText.textContent = questions[currentQuestionIndex].failMsg ?? failDefaultMsg;
+        answerText.classList.add('fail');
+        answerDisplay.classList.add('fail');
         answerDisplay.classList.add('show');
         document.querySelectorAll('.btn').forEach(btn => btn.disabled = true);
     } else if (nextIndex === -1) {
