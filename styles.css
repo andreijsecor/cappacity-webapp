@@ -81,6 +81,7 @@ body {
     font-size: 1rem;
     transition: all 0.3s ease;
     background: white;
+    margin-top: 20px;
 }
 
 .answer-input:focus {
@@ -92,7 +93,6 @@ body {
 .button-group {
     display: flex;
     gap: 15px;
-    margin-top: 20px;
 }
 
 .btn {
