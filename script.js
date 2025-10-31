@@ -14,13 +14,13 @@ async function submitAnswer(answerIndex) {
 
     switch(answerIndex) {
         case 0:
-            nextIndex = questions[currentQuestionIndex].yes;
+            nextIndex = questions[currentQuestionIndex].yes ?? -1;
             break;
         case 1:
-            nextIndex = questions[currentQuestionIndex].no;
+            nextIndex = questions[currentQuestionIndex].no ?? -1;
             break;
         default:
-            nextIndex = questions[currentQuestionIndex].maybe;
+            nextIndex = questions[currentQuestionIndex].maybe ?? -1;
             break;
     }
     if (nextIndex === true) {
