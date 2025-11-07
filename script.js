@@ -6,6 +6,9 @@ const passDefaultMsg = "Your patient has demonstrated an ability to communicate 
 const failDefaultMsg = "Your patient cannot make a reasoned decision about their medical treatment."
 
 currentQuestionIndex = -1;
+questionHistory = [];
+questionViewIndex = 0;
+currentAnswerIndex = -1;
 
 async function submitAnswer(answerIndex) {
     const questions = (await questionsPromise).questions;
@@ -28,22 +31,31 @@ async function submitAnswer(answerIndex) {
         answerText.classList.add('pass');
         answerDisplay.classList.add('pass');
         answerDisplay.classList.add('show');
-        document.querySelectorAll('.btn').forEach(btn => btn.disabled = true);
+        document.querySelector('.btn.btn-nav[onclick*="viewNext"]').disabled = true;
+        document.querySelector('.button-group').querySelectorAll('.btn').forEach(btn => btn.disabled = true);
     } else if (nextIndex === false) {
         answerText.textContent = questions[currentQuestionIndex].failMsg ?? failDefaultMsg;
         answerText.classList.add('fail');
         answerDisplay.classList.add('fail');
         answerDisplay.classList.add('show');
-        document.querySelectorAll('.btn').forEach(btn => btn.disabled = true);
+        document.querySelector('.btn.btn-nav[onclick*="viewNext"]').disabled = true;
+        document.querySelector('.button-group').querySelectorAll('.btn').forEach(btn => btn.disabled = true);
     } else if (nextIndex === -1) {
         alert('Error: tree behavior not implemented.');
     } else {
+        questionHistory.push({
+            index: currentQuestionIndex,
+            answer: answerIndex
+        });
         currentQuestionIndex = nextIndex;
-        getNewQuestion();
+        questionViewIndex = questionHistory.length;
+        currentAnswerIndex = -1;
+        await updateQuestionView();
+        updateAnswerView();
     }
 }
 
-async function getNewQuestion() {
+async function updateQuestionView() {
     const questions = (await questionsPromise).questions;
     const questionElement = document.querySelector('.question');
     const answerDisplay = document.getElementById('answerDisplay');
@@ -58,10 +70,21 @@ async function getNewQuestion() {
     
     // Clear input
     answerInput.value = '';
-    
+
+    // Disable prev button if at beginning
+    const prevBtn = document.querySelector('.btn.btn-nav[onclick*="viewPrevious"]');
+    if (prevBtn) {
+        prevBtn.disabled = (questionViewIndex === 0);
+    }
+
+    // Disable next button if at end
+    const nextBtn = document.querySelector('.btn.btn-nav[onclick*="viewNext"]');
+    if (nextBtn) {
+        nextBtn.disabled = (questionViewIndex > questionHistory.length) || (questionViewIndex == questionHistory.length && currentAnswerIndex == -1);
+    }
     // Get next question
     questionElement.innerHTML = '';
-    questions[currentQuestionIndex].question.forEach(question => {
+    questions[questionViewIndex >= questionHistory.length ? currentQuestionIndex : questionHistory[questionViewIndex].index].question.forEach(question => {
         questionElement.appendChild(document.createElement('br'));
         questionElement.lastChild.after(question);
     });
@@ -74,4 +97,57 @@ async function getNewQuestion() {
     }, 200);
 }
 
-getNewQuestion();
+function updateAnswerView() {
+    document.querySelector('.button-group').querySelectorAll('.btn').forEach(btn => btn.classList.remove('btn-selected'));
+    switch (questionViewIndex >= questionHistory.length ? currentAnswerIndex : questionHistory[questionViewIndex].answer) {
+        case 0:
+            document.querySelector('.btn-yes').classList.add('btn-selected');
+            break;
+        case 1:
+            document.querySelector('.btn-no').classList.add('btn-selected');
+            break;
+        case 2:
+            document.querySelector('.btn-maybe').classList.add('btn-selected');
+            break;
+        default:
+            document.querySelector('.btn.btn-nav[onclick*="viewNext"]').disabled = true;
+    }
+}
+
+async function viewNext() {
+    if (questionViewIndex > questionHistory.length) {
+        return false;
+    }
+    if (questionViewIndex == questionHistory.length && currentAnswerIndex != -1) {
+        submitAnswer(currentAnswerIndex);
+        return true;
+    }
+    questionViewIndex++;
+    await updateQuestionView();
+    updateAnswerView();
+    return true;
+}
+
+async function viewPrevious() {
+    if (questionViewIndex <= 0) {
+        return false;
+    }
+    questionViewIndex--;
+    await updateQuestionView();
+    updateAnswerView();
+    document.querySelector('.button-group').querySelectorAll('.btn').forEach(btn => btn.disabled = false)
+    return true;
+}
+
+function selectAnswer(answerIndex) {
+    viewAnswer = questionViewIndex >= questionHistory.length ? currentAnswerIndex : questionHistory[questionViewIndex].answer
+    currentAnswerIndex = viewAnswer == answerIndex ? -1 : answerIndex;
+    if (questionViewIndex < questionHistory.length) {
+        currentQuestionIndex = questionHistory[questionViewIndex].index;
+        questionHistory = questionHistory.slice(0, questionViewIndex);
+    }
+    document.querySelector('.btn.btn-nav[onclick*="viewNext"]').disabled = false;
+    updateAnswerView();
+}
+
+updateQuestionView();

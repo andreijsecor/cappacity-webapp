@@ -14,11 +14,15 @@
         </div>
 
         <div class="question-section">
+            <div class="navigation-group">
+                <button class="btn btn-nav" onclick="viewPrevious()">← Back</button>
+                <button class="btn btn-nav" onclick="viewNext()">Forward →</button>
+            </div>
             <div class="question"></div>
             <div class="button-group">
-                <button class="btn btn-yes" onclick="submitAnswer(0)">Yes</button>
-                <button class="btn btn-no" onclick="submitAnswer(1)">No</button>
-                <button class="btn btn-maybe" onclick="submitAnswer(2)">Maybe</button>
+                <button class="btn btn-yes" onclick="selectAnswer(0)">Yes</button>
+                <button class="btn btn-no" onclick="selectAnswer(1)">No</button>
+                <button class="btn btn-maybe" onclick="selectAnswer(2)">Maybe</button>
             </div>
             <input type="text" class="answer-input" placeholder="Enter additional notes..." id="answerInput">
             <div class="answer-display" id="answerDisplay">
