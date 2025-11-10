@@ -9,6 +9,7 @@ currentQuestionIndex = -1;
 questionHistory = [];
 questionViewIndex = 0;
 currentAnswerIndex = -1;
+currNotes = "";
 
 async function submitAnswer(answerIndex) {
     const questions = (await questionsPromise).questions;
