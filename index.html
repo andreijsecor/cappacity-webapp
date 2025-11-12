@@ -28,6 +28,15 @@
             <div class="answer-display" id="answerDisplay">
                 <div class="answer-text" id="answerText"></div>
             </div>
+        <div class="btn-history-group">
+            <button class="btn btn-download-history" onclick="downloadAnswersJson()">
+                ⬇️ Download answer log
+            </button>
+            <label for="uploadAnswersJson" class="btn btn-upload-history">
+                ⬆️ Upload answer log
+                <input type="file" id="uploadAnswersJson" accept=".json" style="display: none;" onchange="uploadAnswersJson(event)">
+            </label>
+        </div>
         </div>
 
         <!--div class="features">

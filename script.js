@@ -13,6 +13,46 @@ answerNodeCache = {
     notes: ''
 }
 
+function saveAnswersJson() {
+    answerNodeCache.notes = document.getElementById('answerInput').value;
+    const JSONBlob = {
+        answerHistory: questionHistory,
+        currentAnswer: answerNodeCache
+    }
+    const answersJson = JSON.stringify(JSONBlob, null, 2);
+    return answersJson;
+}
+
+function loadAnswersJson(inputJson) {
+    const JSONBlob = JSON.parse(inputJson);
+    questionHistory = JSONBlob.answerHistory;
+    answerNodeCache = JSONBlob.currentAnswer;
+    questionViewIndex = questionHistory.length;
+    updateQuestionView();
+    updateAnswerView();
+}
+
+function downloadAnswersJson() {
+    const answersJson = saveAnswersJson();
+    const blob = new Blob([answersJson], { type: 'application/json' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = 'answers.json';
+    a.click();
+    URL.revokeObjectURL(url);
+    a.remove();
+}
+
+function uploadAnswersJson(event) {
+    const file = event.target.files[0];
+    const reader = new FileReader();
+    reader.onload = (e) => {
+        loadAnswersJson(e.target.result);
+    }
+    reader.readAsText(file);
+}
+
 async function submitAnswer() {
     const questions = (await questionsPromise).questions;
     const answerDisplay = document.getElementById('answerDisplay');
