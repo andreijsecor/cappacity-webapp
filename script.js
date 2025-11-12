@@ -5,38 +5,40 @@ const questionsPromise = fetch(questionPath).then(response => response.json());
 const passDefaultMsg = "Your patient has demonstrated an ability to communicate a choice, understand the relavant information, appreciate the situation and its consequences, and identify rational reasoning for making their decisions. Therefore, to a reasonable degree of medical certainty, your patient has the capacity to make decisions with informed consent."
 const failDefaultMsg = "Your patient cannot make a reasoned decision about their medical treatment."
 
-currentQuestionIndex = -1;
 questionHistory = [];
 questionViewIndex = 0;
-currentAnswerIndex = -1;
-currentNotesCache = '';
+answerNodeCache = {
+    index: -1,
+    answer: -1,
+    notes: ''
+}
 
-async function submitAnswer(answerIndex) {
+async function submitAnswer() {
     const questions = (await questionsPromise).questions;
     const answerDisplay = document.getElementById('answerDisplay');
     const answerText = document.getElementById('answerText');
 
-    switch(answerIndex) {
+    switch(answerNodeCache.answer) {
         case 0:
-            nextIndex = questions[currentQuestionIndex].yes ?? -1;
+            nextIndex = questions[answerNodeCache.index].yes ?? -1;
             break;
         case 1:
-            nextIndex = questions[currentQuestionIndex].no ?? -1;
+            nextIndex = questions[answerNodeCache.index].no ?? -1;
             break;
         default:
-            nextIndex = questions[currentQuestionIndex].maybe ?? -1;
+            nextIndex = questions[answerNodeCache.index].maybe ?? -1;
             break;
     }
-    currentNotesCache = document.getElementById('answerInput').value;
+    answerNodeCache.notes = document.getElementById('answerInput').value;
     if (nextIndex === true) {
-        answerText.textContent = questions[currentQuestionIndex].passMsg ?? passDefaultMsg;
+        answerText.textContent = questions[answerNodeCache.index].passMsg ?? passDefaultMsg;
         answerText.classList.add('pass');
         answerDisplay.classList.add('pass');
         answerDisplay.classList.add('show');
         document.querySelector('.btn.btn-nav[onclick*="viewNext"]').disabled = true;
         document.querySelector('.button-group').querySelectorAll('.btn').forEach(btn => btn.disabled = true);
     } else if (nextIndex === false) {
-        answerText.textContent = questions[currentQuestionIndex].failMsg ?? failDefaultMsg;
+        answerText.textContent = questions[answerNodeCache.index].failMsg ?? failDefaultMsg;
         answerText.classList.add('fail');
         answerDisplay.classList.add('fail');
         answerDisplay.classList.add('show');
@@ -45,15 +47,13 @@ async function submitAnswer(answerIndex) {
     } else if (nextIndex === -1) {
         alert('Error: tree behavior not implemented.');
     } else {
-        questionHistory.push({
-            index: currentQuestionIndex,
-            answer: answerIndex,
-            notes: currentNotesCache
-        });
-        currentQuestionIndex = nextIndex;
+        questionHistory.push(answerNodeCache);
+        answerNodeCache = {
+            index: nextIndex,
+            answer: -1,
+            notes: ''
+        }
         questionViewIndex = questionHistory.length;
-        currentAnswerIndex = -1;
-        currentNotesCache = '';
         await updateQuestionView();
         updateAnswerView();
     }
@@ -65,15 +65,15 @@ async function updateQuestionView() {
     const answerDisplay = document.getElementById('answerDisplay');
     const answerInput = document.getElementById('answerInput');
 
-    if (currentQuestionIndex === -1) {
-        currentQuestionIndex = (await questionsPromise).startIndex;
+    if (answerNodeCache.index === -1) {
+        answerNodeCache.index = (await questionsPromise).startIndex;
     }
     
     // Hide current answer
     answerDisplay.classList.remove('show');
 
     // Update notes input
-    answerInput.value = questionViewIndex >= questionHistory.length ? currentNotesCache : questionHistory[questionViewIndex].notes;
+    answerInput.value = questionViewIndex >= questionHistory.length ? answerNodeCache.notes : questionHistory[questionViewIndex].notes;
 
     // Disable prev button if at beginning
     const prevBtn = document.querySelector('.btn.btn-nav[onclick*="viewPrevious"]');
@@ -84,11 +84,11 @@ async function updateQuestionView() {
     // Disable next button if at end
     const nextBtn = document.querySelector('.btn.btn-nav[onclick*="viewNext"]');
     if (nextBtn) {
-        nextBtn.disabled = (questionViewIndex > questionHistory.length) || (questionViewIndex == questionHistory.length && currentAnswerIndex == -1);
+        nextBtn.disabled = (questionViewIndex > questionHistory.length) || (questionViewIndex == questionHistory.length && answerNodeCache.answer == -1);
     }
     // Get next question
     questionElement.innerHTML = '';
-    questions[questionViewIndex >= questionHistory.length ? currentQuestionIndex : questionHistory[questionViewIndex].index].question.forEach(question => {
+    questions[questionViewIndex >= questionHistory.length ? answerNodeCache.index : questionHistory[questionViewIndex].index].question.forEach(question => {
         questionElement.appendChild(document.createElement('br'));
         questionElement.lastChild.after(question);
     });
@@ -103,7 +103,7 @@ async function updateQuestionView() {
 
 function updateAnswerView() {
     document.querySelector('.button-group').querySelectorAll('.btn').forEach(btn => btn.classList.remove('btn-selected'));
-    switch (questionViewIndex >= questionHistory.length ? currentAnswerIndex : questionHistory[questionViewIndex].answer) {
+    switch (questionViewIndex >= questionHistory.length ? answerNodeCache.answer : questionHistory[questionViewIndex].answer) {
         case 0:
             document.querySelector('.btn-yes').classList.add('btn-selected');
             break;
@@ -122,8 +122,8 @@ async function viewNext() {
     if (questionViewIndex > questionHistory.length) {
         return false;
     }
-    if (questionViewIndex == questionHistory.length && currentAnswerIndex != -1) {
-        submitAnswer(currentAnswerIndex);
+    if (questionViewIndex == questionHistory.length && answerNodeCache.answer != -1) {
+        submitAnswer();
         return true;
     }
     questionHistory[questionViewIndex].notes = document.getElementById('answerInput').value;
@@ -140,7 +140,7 @@ async function viewPrevious() {
     if (questionViewIndex < questionHistory.length) {
         questionHistory[questionViewIndex].notes = document.getElementById('answerInput').value;
     } else {
-        currentNotesCache = document.getElementById('answerInput').value;
+        answerNodeCache.notes = document.getElementById('answerInput').value;
     }
     questionViewIndex--;
     await updateQuestionView();
@@ -150,10 +150,10 @@ async function viewPrevious() {
 }
 
 function selectAnswer(answerIndex) {
-    viewAnswer = questionViewIndex >= questionHistory.length ? currentAnswerIndex : questionHistory[questionViewIndex].answer
-    currentAnswerIndex = viewAnswer == answerIndex ? -1 : answerIndex;
+    viewAnswer = questionViewIndex >= questionHistory.length ? answerNodeCache.answer : questionHistory[questionViewIndex].answer
+    answerNodeCache.answer = viewAnswer == answerIndex ? -1 : answerIndex;
     if (questionViewIndex < questionHistory.length) {
-        currentQuestionIndex = questionHistory[questionViewIndex].index;
+        answerNodeCache.index = questionHistory[questionViewIndex].index;
         questionHistory = questionHistory.slice(0, questionViewIndex);
     }
     document.querySelector('.btn.btn-nav[onclick*="viewNext"]').disabled = false;
