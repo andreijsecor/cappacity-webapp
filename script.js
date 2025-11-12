@@ -9,7 +9,7 @@ currentQuestionIndex = -1;
 questionHistory = [];
 questionViewIndex = 0;
 currentAnswerIndex = -1;
-currNotes = "";
+currentNotesCache = '';
 
 async function submitAnswer(answerIndex) {
     const questions = (await questionsPromise).questions;
@@ -27,6 +27,7 @@ async function submitAnswer(answerIndex) {
             nextIndex = questions[currentQuestionIndex].maybe ?? -1;
             break;
     }
+    currentNotesCache = document.getElementById('answerInput').value;
     if (nextIndex === true) {
         answerText.textContent = questions[currentQuestionIndex].passMsg ?? passDefaultMsg;
         answerText.classList.add('pass');
@@ -46,11 +47,13 @@ async function submitAnswer(answerIndex) {
     } else {
         questionHistory.push({
             index: currentQuestionIndex,
-            answer: answerIndex
+            answer: answerIndex,
+            notes: currentNotesCache
         });
         currentQuestionIndex = nextIndex;
         questionViewIndex = questionHistory.length;
         currentAnswerIndex = -1;
+        currentNotesCache = '';
         await updateQuestionView();
         updateAnswerView();
     }
@@ -68,9 +71,9 @@ async function updateQuestionView() {
     
     // Hide current answer
     answerDisplay.classList.remove('show');
-    
-    // Clear input
-    answerInput.value = '';
+
+    // Update notes input
+    answerInput.value = questionViewIndex >= questionHistory.length ? currentNotesCache : questionHistory[questionViewIndex].notes;
 
     // Disable prev button if at beginning
     const prevBtn = document.querySelector('.btn.btn-nav[onclick*="viewPrevious"]');
@@ -123,6 +126,7 @@ async function viewNext() {
         submitAnswer(currentAnswerIndex);
         return true;
     }
+    questionHistory[questionViewIndex].notes = document.getElementById('answerInput').value;
     questionViewIndex++;
     await updateQuestionView();
     updateAnswerView();
@@ -132,6 +136,11 @@ async function viewNext() {
 async function viewPrevious() {
     if (questionViewIndex <= 0) {
         return false;
+    }
+    if (questionViewIndex < questionHistory.length) {
+        questionHistory[questionViewIndex].notes = document.getElementById('answerInput').value;
+    } else {
+        currentNotesCache = document.getElementById('answerInput').value;
     }
     questionViewIndex--;
     await updateQuestionView();
