@@ -225,4 +225,12 @@ function selectAnswer(answerIndex) {
     updateAnswerView();
 }
 
+document.addEventListener('keydown', (event) => {
+    if (event.key === 'ArrowLeft' && !document.getElementById('btn-prev').disabled) {
+        viewPrevious();
+    } else if ((event.key === 'ArrowRight' || event.key === 'Enter') && !document.getElementById('btn-next').disabled) {
+        viewNext();
+    }
+});
+
 updateQuestionView();
