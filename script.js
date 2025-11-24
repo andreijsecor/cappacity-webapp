@@ -226,6 +226,9 @@ function selectAnswer(answerIndex) {
 }
 
 document.addEventListener('keydown', (event) => {
+    if (document.activeElement === document.getElementById('answerInput')) {
+        return;
+    }
     if (event.key === 'ArrowLeft' && !document.getElementById('btn-prev').disabled) {
         viewPrevious();
     } else if ((event.key === 'ArrowRight' || event.key === 'Enter') && !document.getElementById('btn-next').disabled) {
