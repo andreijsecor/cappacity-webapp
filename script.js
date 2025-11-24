@@ -53,6 +53,23 @@ function uploadAnswersJson(event) {
     reader.readAsText(file);
 }
 
+function resetAnswers() {
+    questionHistory = [];
+    answerNodeCache = {
+        index: -1,
+        answer: -1,
+        notes: ''
+    }
+    questionViewIndex = 0;
+    document.getElementById('answerInput').value = '';
+    document.getElementById('answerText').querySelectorAll('p').forEach(n => n.remove());
+    document.getElementById('answerText').classList.remove('pass', 'fail');
+    document.getElementById('answerDisplay').classList.remove('show', 'pass', 'fail');
+    document.querySelector('.button-group').querySelectorAll('.btn').forEach(btn => btn.disabled = false)
+    updateQuestionView();
+    updateAnswerView();
+}
+
 async function submitAnswer() {
     const questions = (await questionsPromise).questions;
     const answerDisplay = document.getElementById('answerDisplay');
@@ -71,17 +88,25 @@ async function submitAnswer() {
     }
     answerNodeCache.notes = document.getElementById('answerInput').value;
     if (nextIndex === true) {
-        answerText.textContent = questions[answerNodeCache.index].passMsg ?? passDefaultMsg;
+        // Create <p> element and prepend it
+        const p = document.createElement('p');
+        p.textContent = questions[answerNodeCache.index].passMsg ?? passDefaultMsg;
+        // Remove all existing <p> inside answerText
+        answerText.querySelectorAll('p').forEach(n => n.remove());
+        answerText.prepend(p);
         answerText.classList.add('pass');
-        answerDisplay.classList.add('pass');
-        answerDisplay.classList.add('show');
+        answerDisplay.classList.add('pass', 'show');
         document.querySelector('.btn.btn-nav[onclick*="viewNext"]').disabled = true;
         document.querySelector('.button-group').querySelectorAll('.btn').forEach(btn => btn.disabled = true);
     } else if (nextIndex === false) {
-        answerText.textContent = questions[answerNodeCache.index].failMsg ?? failDefaultMsg;
+        // Create <p> element and prepend it
+        const p = document.createElement('p');
+        p.textContent = questions[answerNodeCache.index].failMsg ?? failDefaultMsg;
+        // Remove all existing <p> inside answerText
+        answerText.querySelectorAll('p').forEach(n => n.remove());
+        answerText.prepend(p);
         answerText.classList.add('fail');
-        answerDisplay.classList.add('fail');
-        answerDisplay.classList.add('show');
+        answerDisplay.classList.add('fail', 'show');
         document.querySelector('.btn.btn-nav[onclick*="viewNext"]').disabled = true;
         document.querySelector('.button-group').querySelectorAll('.btn').forEach(btn => btn.disabled = true);
     } else if (nextIndex === -1) {
@@ -110,7 +135,7 @@ async function updateQuestionView() {
     }
     
     // Hide current answer
-    answerDisplay.classList.remove('show');
+    answerDisplay.classList.remove('show', 'pass', 'fail');
 
     // Update notes input
     answerInput.value = questionViewIndex >= questionHistory.length ? answerNodeCache.notes : questionHistory[questionViewIndex].notes;
