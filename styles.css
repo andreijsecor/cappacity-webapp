@@ -222,6 +222,9 @@ body {
 
 .btn-reset {
     margin-top: 10px;
+    margin-left: 50%;
+    transform: translateX(-50%);
+    width: 114px;
     background: #fff9;
     color: #333;
     border: 1px solid #ccc9;
