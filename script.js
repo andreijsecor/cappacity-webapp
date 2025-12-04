@@ -45,6 +45,8 @@ function loadAnswersJson(inputJson) {
     document.querySelector('.patient-name').textContent = "Patient: " + patientName;
     updateQuestionView();
     updateAnswerView();
+    document.querySelector('.start-screen').setAttribute('hidden', true);
+    document.querySelector('.main-screen').hidden = false;
 }
 
 function downloadAnswersJson() {

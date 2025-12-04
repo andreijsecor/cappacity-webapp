@@ -12,9 +12,15 @@
         <h1 class="title">Cappacity</h1>
         <p class="subtitle">Determine your patient's ability to make sound medical decisions</p>
         <input type="text" id="patientNameInput" class="answer-input" placeholder="Enter patient name...">
-        <button class="btn btn-start" onclick="startAssessment()">
-            Start Assessment
-        </button>
+        <div class="button-start-group">
+            <button class="btn btn-start" onclick="startAssessment()">
+                Start Assessment
+            </button>
+            <label for="uploadAnswersJson" class="btn btn-upload-history">
+                ⬆️ Upload answer log
+                <input type="file" id="uploadAnswersJson" accept=".json" style="display: none;" onchange="uploadAnswersJson(event)">
+            </label>
+        </div>
     </div>
 
     <!-- Main App -->
@@ -42,15 +48,9 @@
                     <button class="btn btn-reset" onclick="resetAnswers()">🔄 Restart</button>
                 </div>
             </div>
-            <div class="btn-history-group">
-                <button class="btn btn-download-history" onclick="downloadAnswersJson()">
-                    ⬇️ Download answer log
-                </button>
-                <label for="uploadAnswersJson" class="btn btn-upload-history">
-                    ⬆️ Upload answer log
-                    <input type="file" id="uploadAnswersJson" accept=".json" style="display: none;" onchange="uploadAnswersJson(event)">
-                </label>
-            </div>
+            <button class="btn btn-download-history" onclick="downloadAnswersJson()">
+                ⬇️ Download answer log
+            </button>
         </div>
     </div>
 
