@@ -7,16 +7,28 @@
     <link rel="stylesheet" href="styles.css">
 </head>
 <body>
-    <div class="container">
+    <!-- Start Screen -->
+    <div class="container start-screen">
+        <h1 class="title">Cappacity</h1>
+        <p class="subtitle">Determine your patient's ability to make sound medical decisions</p>
+        <input type="text" id="patientNameInput" class="answer-input" placeholder="Enter patient name...">
+        <button class="btn btn-start" onclick="startAssessment()">
+            Start Assessment
+        </button>
+    </div>
+
+    <!-- Main App -->
+    <div class="container main-screen" hidden>
         <div class="header">
             <h1 class="title">Cappacity</h1>
             <p class="subtitle">Determine your patient's ability to make sound medical decisions</p>
+            <p class="patient-name"></p>
         </div>
 
         <div class="question-section">
             <div class="navigation-group">
-                <button class="btn btn-nav" onclick="viewPrevious()" id="btn-prev">← Back</button>
-                <button class="btn btn-nav" onclick="viewNext()" id="btn-next">Forward →</button>
+                <button class="btn btn-nav" onclick="viewPrevious()" id="btn-prev">← Previous Question</button>
+                <button class="btn btn-nav" onclick="viewNext()" id="btn-next">Next Question →</button>
             </div>
             <div class="question"></div>
             <div class="button-group">

@@ -25,6 +25,10 @@ body {
     animation: slideUp 0.6s ease-out;
 }
 
+.start-screen {
+    text-align: center;
+}
+
 @keyframes slideUp {
     from {
         opacity: 0;
@@ -55,6 +59,13 @@ body {
     color: #666;
     font-size: 1.1rem;
     font-weight: 300;
+}
+
+.patient-name {
+    color: #555;
+    font-size: 1.5rem;
+    font-weight: 300;
+    margin-top: 10px;
 }
 
 .question-section {
@@ -124,6 +135,17 @@ body {
     flex: 1;
 }
 
+.btn-start {
+    background: linear-gradient(135deg, #667eea, #764ba2);
+    color: white;
+    margin-top: 20px;
+}
+
+.btn-start:hover:not(:disabled) {
+    transform: translateY(-2px);
+    box-shadow: 0 10px 20px rgba(102, 126, 234, 0.3);
+}
+
 .btn-yes {
     background: linear-gradient(135deg, #667eea, #764ba2);
     color: white;
@@ -137,6 +159,7 @@ body {
 .btn-yes.btn-selected {
     transform: translateY(-2px);
     opacity: 0.8;
+    border: solid 2px #30c5ff;
 }
 
 .btn-maybe {
@@ -153,6 +176,7 @@ body {
 .btn-maybe.btn-selected {
     transform: translateY(-2px);
     opacity: 0.8;
+    border: solid 2px #30c5ff;
 }
 
 .btn-no {
@@ -169,6 +193,7 @@ body {
 .btn-no.btn-selected {
     transform: translateY(-2px);
     opacity: 0.8;
+    border: solid 2px #30c5ff;
 }
 
 .btn:disabled {

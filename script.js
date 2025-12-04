@@ -5,6 +5,7 @@ const questionsPromise = fetch(questionPath).then(response => response.json());
 const passDefaultMsg = "Your patient has demonstrated an ability to communicate a choice, understand the relavant information, appreciate the situation and its consequences, and identify rational reasoning for making their decisions. Therefore, to a reasonable degree of medical certainty, your patient has the capacity to make decisions with informed consent."
 const failDefaultMsg = "Your patient cannot make a reasoned decision about their medical treatment."
 
+patientName='';
 questionHistory = [];
 questionViewIndex = 0;
 answerNodeCache = {
@@ -13,9 +14,21 @@ answerNodeCache = {
     notes: ''
 }
 
+function startAssessment() {
+    if (document.getElementById('patientNameInput').value.trim() === "") {
+        alert("Please enter the patient's name before starting the assessment.");
+        return;
+    }
+    patientName = document.getElementById('patientNameInput').value;
+    document.querySelector('.patient-name').textContent = "Patient: " + patientName;
+    document.querySelector('.start-screen').setAttribute('hidden', true);
+    document.querySelector('.main-screen').hidden = false;
+}
+
 function saveAnswersJson() {
     answerNodeCache.notes = document.getElementById('answerInput').value;
     const JSONBlob = {
+        patientName: patientName,
         answerHistory: questionHistory,
         currentAnswer: answerNodeCache
     }
@@ -25,9 +38,11 @@ function saveAnswersJson() {
 
 function loadAnswersJson(inputJson) {
     const JSONBlob = JSON.parse(inputJson);
+    patientName = JSONBlob.patientName;
     questionHistory = JSONBlob.answerHistory;
     answerNodeCache = JSONBlob.currentAnswer;
     questionViewIndex = questionHistory.length;
+    document.querySelector('.patient-name').textContent = "Patient: " + patientName;
     updateQuestionView();
     updateAnswerView();
 }
@@ -38,7 +53,7 @@ function downloadAnswersJson() {
     const url = URL.createObjectURL(blob);
     const a = document.createElement('a');
     a.href = url;
-    a.download = 'answers.json';
+    a.download = patientName + ' - cappacity log.json';
     a.click();
     URL.revokeObjectURL(url);
     a.remove();
@@ -233,6 +248,12 @@ document.addEventListener('keydown', (event) => {
         viewPrevious();
     } else if ((event.key === 'ArrowRight' || event.key === 'Enter') && !document.getElementById('btn-next').disabled) {
         viewNext();
+    }
+});
+
+document.getElementById('patientNameInput').addEventListener('keydown', (event) => {
+    if (event.key === 'Enter') {
+        startAssessment();
     }
 });
 
