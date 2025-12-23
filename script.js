@@ -76,23 +76,29 @@ function uploadAnswersJson(event) {
 }
 
 async function downloadAnswersPdf() {
-    const doc = new jsPDF();
+    const doc = new jsPDF({unit: 'pt'});
     const questions = (await questionsPromise).questions;
     const answersJson = JSON.parse(saveAnswersJson());
-    const downloadTxt = 
-`Patient: ${answersJson.patientName}
+    const lineHeight = doc.getFontSize()*doc.getLineHeightFactor();
+    const startText = `Patient: ${answersJson.patientName}
+Date: ${new Date().toLocaleDateString()}
 
-Answers:
--\t${answersJson.answerHistory.map(answer => `Question: ${questions[answer.index].question}
-\tAnswer: ${answer.answer == 0 ? 'Yes' : answer.answer == 1 ? 'No' : 'Maybe'}
-\tNotes: ${answer.notes}`).join('\n\n')}
-
--\t${questions[answersJson.currentAnswer.index].question}
-\tAnswer: ${answersJson.currentAnswer.answer == 0 ? 'Yes' : answersJson.currentAnswer.answer == 1 ? 'No' : 'Maybe'}
-\tNotes: ${answersJson.currentAnswer.notes}
-
-Patient is Capable? ${answersJson.isCapable == 1 ? 'Yes' : answersJson.isCapable == 0 ? 'No' : 'Unknown'}`;
-    doc.text(downloadTxt, 10, 10, {maxWidth: 180});
+Answers:`
+    doc.text(startText, 36, 36, {maxWidth: 520});
+    let heightTicker = 36 + 5*lineHeight;
+    [...answersJson.answerHistory, answersJson.currentAnswer].forEach(answer => {
+        const qText = `Question: ${questions[answer.index].question}`;
+        const aText = `Answer: ${answer.answer == 0 ? 'Yes' : answer.answer == 1 ? 'No' : 'Maybe'}`;
+        const nText = `Notes: ${answer.notes}`;
+        doc.text(qText, 72, heightTicker, {maxWidth: 484});
+        heightTicker += lineHeight*(1+doc.getTextWidth(qText)/520);
+        doc.text(aText, 72, heightTicker, {maxWidth: 484});
+        heightTicker += lineHeight*(1+doc.getTextWidth(aText)/520);
+        doc.text(nText, 72, heightTicker, {maxWidth: 484});
+        heightTicker += lineHeight*(1+doc.getTextWidth(nText)/520);
+        heightTicker += lineHeight;
+    });
+    doc.text(`Patient is Capable? ${answersJson.isCapable == 1 ? 'Yes' : answersJson.isCapable == 0 ? 'No' : 'Unknown'}`, 36, heightTicker, {maxWidth: 180});
     doc.save(patientName + ' - cappacity log.pdf');
 }
 
