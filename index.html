@@ -48,12 +48,14 @@
                     <button class="btn btn-reset" onclick="resetAnswers()">🔄 Restart</button>
                 </div>
             </div>
-            <button class="btn btn-download-history" onclick="downloadAnswersJson()">
-                ⬇️ Download answer log
+            <button class="btn btn-download-history" onclick="downloadAnswersPdf()">
+                ⬇️ Download answer log as PDF
             </button>
         </div>
     </div>
-
+    <!-- Libraries -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/3.0.3/jspdf.umd.min.js" integrity="sha384-GwHhSt8QjC7J+v0zZ0Flfho/T76YHEcCL9w4rvjTIUHauh6gWJeBSIi3vWXxNhtA" crossorigin="anonymous"></script>
+    <!-- Scripts -->
     <script src="script.js"></script>
 </body>
 </html>

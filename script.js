@@ -1,3 +1,5 @@
+const { jsPDF } = window.jspdf;
+
 const questionPath = './questions.json';
 
 const questionsPromise = fetch(questionPath).then(response => response.json());
@@ -8,6 +10,7 @@ const failDefaultMsg = "Your patient cannot make a reasoned decision about their
 patientName='';
 questionHistory = [];
 questionViewIndex = 0;
+isCapable = -1;
 answerNodeCache = {
     index: -1,
     answer: -1,
@@ -30,7 +33,8 @@ function saveAnswersJson() {
     const JSONBlob = {
         patientName: patientName,
         answerHistory: questionHistory,
-        currentAnswer: answerNodeCache
+        currentAnswer: answerNodeCache,
+        isCapable: isCapable
     }
     const answersJson = JSON.stringify(JSONBlob, null, 2);
     return answersJson;
@@ -41,6 +45,7 @@ function loadAnswersJson(inputJson) {
     patientName = JSONBlob.patientName;
     questionHistory = JSONBlob.answerHistory;
     answerNodeCache = JSONBlob.currentAnswer;
+    isCapable = JSONBlob.isCapable;
     questionViewIndex = questionHistory.length;
     document.querySelector('.patient-name').textContent = "Patient: " + patientName;
     updateQuestionView();
@@ -70,6 +75,27 @@ function uploadAnswersJson(event) {
     reader.readAsText(file);
 }
 
+async function downloadAnswersPdf() {
+    const doc = new jsPDF();
+    const questions = (await questionsPromise).questions;
+    const answersJson = JSON.parse(saveAnswersJson());
+    const downloadTxt = 
+`Patient: ${answersJson.patientName}
+
+Answers:
+-\t${answersJson.answerHistory.map(answer => `Question: ${questions[answer.index].question}
+\tAnswer: ${answer.answer == 0 ? 'Yes' : answer.answer == 1 ? 'No' : 'Maybe'}
+\tNotes: ${answer.notes}`).join('\n\n')}
+
+-\t${questions[answersJson.currentAnswer.index].question}
+\tAnswer: ${answersJson.currentAnswer.answer == 0 ? 'Yes' : answersJson.currentAnswer.answer == 1 ? 'No' : 'Maybe'}
+\tNotes: ${answersJson.currentAnswer.notes}
+
+Patient is Capable? ${answersJson.isCapable == 1 ? 'Yes' : answersJson.isCapable == 0 ? 'No' : 'Unknown'}`;
+    doc.text(downloadTxt, 10, 10, {maxWidth: 180});
+    doc.save(patientName + ' - cappacity log.pdf');
+}
+
 function resetAnswers() {
     questionHistory = [];
     answerNodeCache = {
@@ -79,18 +105,52 @@ function resetAnswers() {
     }
     questionViewIndex = 0;
     document.getElementById('answerInput').value = '';
-    document.getElementById('answerText').querySelectorAll('p').forEach(n => n.remove());
-    document.getElementById('answerText').classList.remove('pass', 'fail');
-    document.getElementById('answerDisplay').classList.remove('show', 'pass', 'fail');
+    removeVerdict();
     document.querySelector('.button-group').querySelectorAll('.btn').forEach(btn => btn.disabled = false)
     updateQuestionView();
     updateAnswerView();
 }
 
+function removeVerdict() {
+    document.getElementById('answerText').querySelectorAll('p').forEach(n => n.remove());
+    document.getElementById('answerText').classList.remove('pass', 'fail');
+    document.getElementById('answerDisplay').classList.remove('show', 'pass', 'fail');
+}
+
+async function renderVerdict(passed) {
+    const questions = (await questionsPromise).questions;
+    const answerText = document.getElementById('answerText');
+    const answerDisplay = document.getElementById('answerDisplay');
+    
+    isCapable = passed ? 1 : 0;
+    
+    // Create <p> element and prepend it
+    const p = document.createElement('p');
+    if (passed) {
+        p.textContent = questions[answerNodeCache.index].passMsg ?? passDefaultMsg;
+    } else {
+        p.textContent = questions[answerNodeCache.index].failMsg ?? failDefaultMsg;
+    }
+    // Remove all existing <p> inside answerText
+    answerText.querySelectorAll('p').forEach(n => n.remove());
+    answerText.prepend(p);
+    
+    // Add appropriate CSS classes
+    if (passed) {
+        answerText.classList.add('pass');
+        answerDisplay.classList.add('pass', 'show');
+    } else {
+        answerText.classList.add('fail');
+        answerDisplay.classList.add('fail', 'show');
+    }
+    
+    // Disable navigation and answer buttons
+    document.querySelector('.btn.btn-nav[onclick*="viewNext"]').disabled = true;
+    document.querySelector('.button-group').querySelectorAll('.btn').forEach(btn => btn.disabled = true);
+}
+
 async function submitAnswer() {
     const questions = (await questionsPromise).questions;
-    const answerDisplay = document.getElementById('answerDisplay');
-    const answerText = document.getElementById('answerText');
 
     switch(answerNodeCache.answer) {
         case 0:
@@ -105,27 +165,9 @@ async function submitAnswer() {
     }
     answerNodeCache.notes = document.getElementById('answerInput').value;
     if (nextIndex === true) {
-        // Create <p> element and prepend it
-        const p = document.createElement('p');
-        p.textContent = questions[answerNodeCache.index].passMsg ?? passDefaultMsg;
-        // Remove all existing <p> inside answerText
-        answerText.querySelectorAll('p').forEach(n => n.remove());
-        answerText.prepend(p);
-        answerText.classList.add('pass');
-        answerDisplay.classList.add('pass', 'show');
-        document.querySelector('.btn.btn-nav[onclick*="viewNext"]').disabled = true;
-        document.querySelector('.button-group').querySelectorAll('.btn').forEach(btn => btn.disabled = true);
+        await renderVerdict(true);
     } else if (nextIndex === false) {
-        // Create <p> element and prepend it
-        const p = document.createElement('p');
-        p.textContent = questions[answerNodeCache.index].failMsg ?? failDefaultMsg;
-        // Remove all existing <p> inside answerText
-        answerText.querySelectorAll('p').forEach(n => n.remove());
-        answerText.prepend(p);
-        answerText.classList.add('fail');
-        answerDisplay.classList.add('fail', 'show');
-        document.querySelector('.btn.btn-nav[onclick*="viewNext"]').disabled = true;
-        document.querySelector('.button-group').querySelectorAll('.btn').forEach(btn => btn.disabled = true);
+        await renderVerdict(false);
     } else if (nextIndex === -1) {
         alert('Error: tree behavior not implemented.');
     } else {
@@ -144,7 +186,6 @@ async function submitAnswer() {
 async function updateQuestionView() {
     const questions = (await questionsPromise).questions;
     const questionElement = document.querySelector('.question');
-    const answerDisplay = document.getElementById('answerDisplay');
     const answerInput = document.getElementById('answerInput');
 
     if (answerNodeCache.index === -1) {
@@ -152,7 +193,7 @@ async function updateQuestionView() {
     }
     
     // Hide current answer
-    answerDisplay.classList.remove('show', 'pass', 'fail');
+    removeVerdict();
 
     // Update notes input
     answerInput.value = questionViewIndex >= questionHistory.length ? answerNodeCache.notes : questionHistory[questionViewIndex].notes;
@@ -181,6 +222,9 @@ async function updateQuestionView() {
     setTimeout(() => {
         questionElement.style.opacity = '1';
     }, 200);
+
+    // Reset isCapable
+    isCapable = -1;
 }
 
 function updateAnswerView() {
