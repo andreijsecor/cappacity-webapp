@@ -80,25 +80,37 @@ async function downloadAnswersPdf() {
     const questions = (await questionsPromise).questions;
     const answersJson = JSON.parse(saveAnswersJson());
     const lineHeight = doc.getFontSize()*doc.getLineHeightFactor();
+    const marginHorizontal = 36;
+    const marginVertical = 36;
+    const indent = 36;
+    const pageWidth = doc.internal.pageSize.getWidth() - 2*marginHorizontal;
+    const pageHeight = doc.internal.pageSize.getHeight() - 2*marginVertical;
     const startText = `Patient: ${answersJson.patientName}
-Date: ${new Date().toLocaleDateString()}
-
-Answers:`
-    doc.text(startText, 36, 36, {maxWidth: 520});
-    let heightTicker = 36 + 5*lineHeight;
+Date: ${new Date().toLocaleDateString()}`
+    doc.text(startText, marginHorizontal, marginVertical, {maxWidth: pageWidth});
+    let heightTicker = marginVertical + 2*lineHeight;
+    doc.text(`Assesment result: ${answersJson.isCapable == 1 ? 'CAPABLE' : answersJson.isCapable == 0 ? 'NOT CAPABLE' : 'INCOMPLETE'}`, marginHorizontal, heightTicker, {maxWidth: pageWidth});
+    heightTicker += lineHeight;
+    doc.text("Answers:", marginHorizontal, heightTicker, {maxWidth: pageWidth});
+    heightTicker += 2*lineHeight;
     [...answersJson.answerHistory, answersJson.currentAnswer].forEach(answer => {
         const qText = `Question: ${questions[answer.index].question}`;
+        const qLen = doc.splitTextToSize(qText, pageWidth-indent).length;
         const aText = `Answer: ${answer.answer == 0 ? 'Yes' : answer.answer == 1 ? 'No' : 'Maybe'}`;
+        const aLen = doc.splitTextToSize(aText, pageWidth-indent).length;
         const nText = `Notes: ${answer.notes}`;
-        doc.text(qText, 72, heightTicker, {maxWidth: 484});
-        heightTicker += lineHeight*(1+doc.getTextWidth(qText)/520);
-        doc.text(aText, 72, heightTicker, {maxWidth: 484});
-        heightTicker += lineHeight*(1+doc.getTextWidth(aText)/520);
-        doc.text(nText, 72, heightTicker, {maxWidth: 484});
-        heightTicker += lineHeight*(1+doc.getTextWidth(nText)/520);
-        heightTicker += lineHeight;
+        const nLen = doc.splitTextToSize(nText, pageWidth-indent).length;
+        if (heightTicker + lineHeight*(0.2+qLen+aLen+nLen) + marginVertical > pageHeight) {
+            doc.addPage();
+            heightTicker = marginVertical;
+        }
+        doc.text(qText, marginHorizontal+indent, heightTicker, {maxWidth: pageWidth-indent});
+        heightTicker += lineHeight*(0.1+qLen);
+        doc.text(aText, marginHorizontal+indent, heightTicker, {maxWidth: pageWidth-indent});
+        heightTicker += lineHeight*(0.1+aLen);
+        doc.text(nText, marginHorizontal+indent, heightTicker, {maxWidth: pageWidth-indent});
+        heightTicker += lineHeight*(0.5+nLen);
     });
-    doc.text(`Patient is Capable? ${answersJson.isCapable == 1 ? 'Yes' : answersJson.isCapable == 0 ? 'No' : 'Unknown'}`, 36, heightTicker, {maxWidth: 180});
     doc.save(patientName + ' - cappacity log.pdf');
 }
 
