@@ -79,16 +79,26 @@ async function downloadAnswersPdf() {
     const doc = new jsPDF({unit: 'pt'});
     const questions = (await questionsPromise).questions;
     const answersJson = JSON.parse(saveAnswersJson());
-    const lineHeight = doc.getFontSize()*doc.getLineHeightFactor();
     const marginHorizontal = 36;
     const marginVertical = 36;
     const indent = 36;
     const pageWidth = doc.internal.pageSize.getWidth() - 2*marginHorizontal;
     const pageHeight = doc.internal.pageSize.getHeight() - 2*marginVertical;
+    const fontSize = 16;
+    const titleFontSize = 36;
+    const lineHeight = fontSize*doc.getLineHeightFactor();
+    const titleLineHeight = titleFontSize*doc.getLineHeightFactor();
     const startText = `Patient: ${answersJson.patientName}
 Date: ${new Date().toLocaleDateString()}`
-    doc.text(startText, marginHorizontal, marginVertical, {maxWidth: pageWidth});
-    let heightTicker = marginVertical + 2*lineHeight;
+    let heightTicker = marginVertical;
+    doc.setFontSize(titleFontSize);
+    doc.setTextColor("#667eea");
+    doc.text("Cappacity", doc.internal.pageSize.getWidth()/2, heightTicker + titleFontSize/2, {maxWidth: pageWidth, align: "center"});
+    doc.setFontSize(fontSize);
+    doc.setTextColor("#000");
+    heightTicker += titleLineHeight;
+    doc.text(startText, marginHorizontal, heightTicker, {maxWidth: pageWidth});
+    heightTicker += 2*lineHeight;
     doc.text(`Assesment result: ${answersJson.isCapable == 1 ? 'CAPABLE' : answersJson.isCapable == 0 ? 'NOT CAPABLE' : 'INCOMPLETE'}`, marginHorizontal, heightTicker, {maxWidth: pageWidth});
     heightTicker += lineHeight;
     doc.text("Answers:", marginHorizontal, heightTicker, {maxWidth: pageWidth});
@@ -96,7 +106,7 @@ Date: ${new Date().toLocaleDateString()}`
     [...answersJson.answerHistory, answersJson.currentAnswer].forEach(answer => {
         const qText = `Question: ${questions[answer.index].question}`;
         const qLen = doc.splitTextToSize(qText, pageWidth-indent).length;
-        const aText = `Answer: ${answer.answer == 0 ? 'Yes' : answer.answer == 1 ? 'No' : 'Maybe'}`;
+        const aText = `Answer: ${answer.answer == 0 ? 'Yes' : answer.answer == 1 ? 'No' : answer.answer == 2 ? 'Maybe' : 'Incomplete'}`;
         const aLen = doc.splitTextToSize(aText, pageWidth-indent).length;
         const nText = `Notes: ${answer.notes}`;
         const nLen = doc.splitTextToSize(nText, pageWidth-indent).length;
