@@ -80,46 +80,62 @@ async function downloadAnswersPdf() {
     const questions = (await questionsPromise).questions;
     const answersJson = JSON.parse(saveAnswersJson());
     const marginHorizontal = 36;
-    const marginVertical = 36;
+    const marginVertical = 54;
     const indent = 36;
     const pageWidth = doc.internal.pageSize.getWidth() - 2*marginHorizontal;
     const pageHeight = doc.internal.pageSize.getHeight() - 2*marginVertical;
+    const font = "helvetica";
     const fontSize = 16;
     const titleFontSize = 36;
     const lineHeight = fontSize*doc.getLineHeightFactor();
     const titleLineHeight = titleFontSize*doc.getLineHeightFactor();
-    const startText = `Patient: ${answersJson.patientName}
-Date: ${new Date().toLocaleDateString()}`
     let heightTicker = marginVertical;
+    //title
     doc.setFontSize(titleFontSize);
     doc.setTextColor("#667eea");
-    doc.text("Cappacity", doc.internal.pageSize.getWidth()/2, heightTicker + titleFontSize/2, {maxWidth: pageWidth, align: "center"});
+    doc.text("Cappacity Assessment", doc.internal.pageSize.getWidth()/2, heightTicker + titleFontSize/2, {maxWidth: pageWidth, align: "center"});
     doc.setFontSize(fontSize);
     doc.setTextColor("#000");
-    heightTicker += titleLineHeight;
-    doc.text(startText, marginHorizontal, heightTicker, {maxWidth: pageWidth});
+    heightTicker += titleLineHeight + 0.5*lineHeight;
+    //patient
+    doc.text(`Patient: ${answersJson.patientName}`, doc.internal.pageSize.getWidth()/2, heightTicker, {maxWidth: pageWidth, align: "center"});
+    heightTicker += lineHeight;
+    //date
+    doc.text(`Date: ${new Date().toLocaleDateString()}`, doc.internal.pageSize.getWidth()/2, heightTicker, {maxWidth: pageWidth, align: "center"});
     heightTicker += 2*lineHeight;
+    //result
     doc.text(`Assesment result: ${answersJson.isCapable == 1 ? 'CAPABLE' : answersJson.isCapable == 0 ? 'NOT CAPABLE' : 'INCOMPLETE'}`, marginHorizontal, heightTicker, {maxWidth: pageWidth});
     heightTicker += lineHeight;
+    //answers
     doc.text("Answers:", marginHorizontal, heightTicker, {maxWidth: pageWidth});
     heightTicker += 2*lineHeight;
+    //questions
     [...answersJson.answerHistory, answersJson.currentAnswer].forEach(answer => {
-        const qText = `Question: ${questions[answer.index].question}`;
+        const qText = `Question: ${questions[answer.index].question.join('\n')}`;
         const qLen = doc.splitTextToSize(qText, pageWidth-indent).length;
         const aText = `Answer: ${answer.answer == 0 ? 'Yes' : answer.answer == 1 ? 'No' : answer.answer == 2 ? 'Maybe' : 'Incomplete'}`;
         const aLen = doc.splitTextToSize(aText, pageWidth-indent).length;
-        const nText = `Notes: ${answer.notes}`;
-        const nLen = doc.splitTextToSize(nText, pageWidth-indent).length;
-        if (heightTicker + lineHeight*(0.2+qLen+aLen+nLen) + marginVertical > pageHeight) {
+        const nText = answer.notes === '' ? '' : `Notes: ${answer.notes}`;
+        const nLen = nText === '' ? 0 : doc.splitTextToSize(nText, pageWidth-indent).length;
+        //allocate room on page
+        if (heightTicker + lineHeight*(0.2+qLen+aLen+nLen) > pageHeight) {
             doc.addPage();
             heightTicker = marginVertical;
         }
+        //question
         doc.text(qText, marginHorizontal+indent, heightTicker, {maxWidth: pageWidth-indent});
         heightTicker += lineHeight*(0.1+qLen);
+        //answer
         doc.text(aText, marginHorizontal+indent, heightTicker, {maxWidth: pageWidth-indent});
         heightTicker += lineHeight*(0.1+aLen);
-        doc.text(nText, marginHorizontal+indent, heightTicker, {maxWidth: pageWidth-indent});
-        heightTicker += lineHeight*(0.5+nLen);
+        //notes
+        if (nLen > 0) {
+            doc.setFont(font, "italic");
+            doc.text(nText, marginHorizontal+indent, heightTicker, {maxWidth: pageWidth-indent});
+            doc.setFont(font, "normal");
+            heightTicker += lineHeight*(0.1+nLen);
+        }
+        heightTicker += 0.9*lineHeight;
     });
     doc.save(patientName + ' - cappacity log.pdf');
 }
