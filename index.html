@@ -13,13 +13,12 @@
         <p class="subtitle">Determine your patient's ability to make sound medical decisions</p>
         <input type="text" id="patientNameInput" class="answer-input" placeholder="Enter patient name...">
         <div class="button-start-group">
-            <button class="btn btn-start" onclick="startAssessment()">
+            <button class="btn btn-start" onclick="startAssessment(true)">
                 Start Assessment
             </button>
-            <!--label for="uploadAnswersJson" class="btn btn-upload-history">
-                ⬆️ Upload answer log
-                <input type="file" id="uploadAnswersJson" accept=".json" style="display: none;" onchange="uploadAnswersJson(event)">
-            </label-->
+            <button class="btn btn-start-second" onclick="startAssessment(false)">
+                Start with no name
+            </button>
         </div>
     </div>
 
@@ -48,7 +47,7 @@
                     <button class="btn btn-reset" onclick="resetAnswers()">🔄 Restart</button>
                 </div>
             </div>
-            <button class="btn btn-download-history" onclick="downloadAnswersPdf()">
+            <button class="btn btn-download-history" onclick="downloadAnswersPdf(false)">
                 ⬇️ Download answer log as PDF
             </button>
         </div>

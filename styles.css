@@ -142,9 +142,22 @@ body {
     text-wrap: nowrap;
 }
 
+.btn-start-second {
+    background: #f8f9fa;
+    color: #666;
+    border: 2px solid #e1e5e9;
+    flex-grow: 0;
+    text-wrap: nowrap;
+}
+
 .btn-start:hover:not(:disabled) {
     transform: translateY(-2px);
     box-shadow: 0 10px 20px rgba(102, 126, 234, 0.3);
+}
+
+.btn-start-second:hover:not(:disabled) {
+    background: #e9ecef;
+    transform: translateY(-2px);
 }
 
 .button-start-group {
@@ -227,23 +240,6 @@ body {
     background: #e9ecef;
 }
 
-.btn-upload-history {
-    background: #fff;
-    color: #333;
-    border: 1px solid #ccc;
-    border-radius: 6px;
-    padding: 10px 18px;
-    box-shadow: 0 1px 8px rgba(0,0,0,0.08);
-    font-size: 1rem;
-    cursor: pointer;
-    max-width: fit-content;
-    text-align: center;
-}
-
-.btn-upload-history:hover {
-    background: #e9ecef;
-}
-
 .btn-reset {
     margin-top: 10px;
     margin-left: 50%;
@@ -323,16 +319,12 @@ body {
         flex-direction: column;
     }
 
-    .btn-start {
+    .btn-start, .btn-start-second {
         flex-grow: auto;
         text-wrap: wrap;
     }
 
     .btn-download-history {
-        min-width: 100%;
-    }
-
-    .btn-upload-history {
         min-width: 100%;
     }
 }

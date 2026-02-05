@@ -7,6 +7,7 @@ const questionsPromise = fetch(questionPath).then(response => response.json());
 const passDefaultMsg = "Your patient has demonstrated an ability to communicate a choice, understand the relavant information, appreciate the situation and its consequences, and identify rational reasoning for making their decisions. Therefore, to a reasonable degree of medical certainty, your patient has the capacity to make decisions with informed consent."
 const failDefaultMsg = "Your patient cannot make a reasoned decision about their medical treatment."
 
+email = '';
 patientName='';
 questionHistory = [];
 questionViewIndex = 0;
@@ -17,13 +18,17 @@ answerNodeCache = {
     notes: ''
 }
 
-function startAssessment() {
-    if (document.getElementById('patientNameInput').value.trim() === "") {
+function startAssessment(includeName) {
+    if (includeName && document.getElementById('patientNameInput').value.trim() === "") {
         alert("Please enter the patient's name before starting the assessment.");
         return;
     }
-    patientName = document.getElementById('patientNameInput').value;
-    document.querySelector('.patient-name').textContent = "Patient: " + patientName;
+    if (includeName) {
+        patientName = document.getElementById('patientNameInput').value;
+    } else {
+        patientName = '';
+    }
+    document.querySelector('.patient-name').textContent = patientName === '' ? 'Anonymous Patient' : "Patient: " + patientName;
     document.querySelector('.start-screen').setAttribute('hidden', true);
     document.querySelector('.main-screen').hidden = false;
 }
@@ -50,8 +55,8 @@ function loadAnswersJson(inputJson) {
     document.querySelector('.patient-name').textContent = "Patient: " + patientName;
     updateQuestionView();
     updateAnswerView();
-    document.querySelector('.start-screen').setAttribute('hidden', true);
-    document.querySelector('.main-screen').hidden = false;
+    document.querySelector('.start-screen').hidden = true;
+    document.querySelector('.main-screen').removeAttribute('hidden');
 }
 
 function downloadAnswersJson() {
@@ -75,7 +80,7 @@ function uploadAnswersJson(event) {
     reader.readAsText(file);
 }
 
-async function downloadAnswersPdf() {
+async function downloadAnswersPdf(isEmail) {
     const doc = new jsPDF({unit: 'pt'});
     const questions = (await questionsPromise).questions;
     const answersJson = JSON.parse(saveAnswersJson());
@@ -98,10 +103,15 @@ async function downloadAnswersPdf() {
     doc.setTextColor("#000");
     heightTicker += titleLineHeight + 0.5*lineHeight;
     //patient
-    doc.text(`Patient: ${answersJson.patientName}`, doc.internal.pageSize.getWidth()/2, heightTicker, {maxWidth: pageWidth, align: "center"});
-    heightTicker += lineHeight;
+    if (answersJson.patientName !== '') {
+        doc.text(`Patient: ${answersJson.patientName}`, doc.internal.pageSize.getWidth()/2, heightTicker, {maxWidth: pageWidth, align: "center"});
+        heightTicker += lineHeight;
+    }
     //date
     doc.text(`Date: ${new Date().toLocaleDateString()}`, doc.internal.pageSize.getWidth()/2, heightTicker, {maxWidth: pageWidth, align: "center"});
+    heightTicker += lineHeight;
+    //time
+    doc.text(`Time: ${new Date().toLocaleTimeString()}`, doc.internal.pageSize.getWidth()/2, heightTicker, {maxWidth: pageWidth, align: "center"});
     heightTicker += 2*lineHeight;
     //result
     doc.text(`Assesment result: ${answersJson.isCapable == 1 ? 'CAPABLE' : answersJson.isCapable == 0 ? 'NOT CAPABLE' : 'INCOMPLETE'}`, marginHorizontal, heightTicker, {maxWidth: pageWidth});
@@ -113,7 +123,7 @@ async function downloadAnswersPdf() {
     [...answersJson.answerHistory, answersJson.currentAnswer].forEach(answer => {
         const qText = `Question: ${questions[answer.index].question.join('\n')}`;
         const qLen = doc.splitTextToSize(qText, pageWidth-indent).length;
-        const aText = `Answer: ${answer.answer == 0 ? 'Yes' : answer.answer == 1 ? 'No' : answer.answer == 2 ? 'Maybe' : 'Incomplete'}`;
+        const aText = `Answer: ${answer.answer == 0 ? 'YES' : answer.answer == 1 ? 'NO' : answer.answer == 2 ? 'MAYBE' : 'INCOMPLETE'}`;
         const aLen = doc.splitTextToSize(aText, pageWidth-indent).length;
         const nText = answer.notes === '' ? '' : `Notes: ${answer.notes}`;
         const nLen = nText === '' ? 0 : doc.splitTextToSize(nText, pageWidth-indent).length;
@@ -137,7 +147,12 @@ async function downloadAnswersPdf() {
         }
         heightTicker += 0.9*lineHeight;
     });
-    doc.save(patientName + ' - cappacity log.pdf');
+    if (isEmail) {
+        mailtoUrl = `mailto:${email}?subject=Cappacity Assessment&body=Please find the cappacity assessment for ${answersJson.patientName} attached.`;
+        window.location.href = mailtoUrl;
+    } else {
+        doc.save((patientName === '' ? new Date().toLocaleTimeString() : patientName) + ' - cappacity log.pdf');
+    }
 }
 
 function resetAnswers() {
@@ -151,6 +166,9 @@ function resetAnswers() {
     document.getElementById('answerInput').value = '';
     removeVerdict();
     document.querySelector('.button-group').querySelectorAll('.btn').forEach(btn => btn.disabled = false)
+    document.getElementById('patientNameInput').value = '';
+    document.querySelector('.main-screen').hidden = true;
+    document.querySelector('.start-screen').removeAttribute('hidden');
     updateQuestionView();
     updateAnswerView();
 }
