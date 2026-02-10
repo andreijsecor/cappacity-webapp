@@ -7,6 +7,15 @@ const questionsPromise = fetch(questionPath).then(response => response.json());
 const passDefaultMsg = "Your patient has demonstrated an ability to communicate a choice, understand the relavant information, appreciate the situation and its consequences, and identify rational reasoning for making their decisions. Therefore, to a reasonable degree of medical certainty, your patient has the capacity to make decisions with informed consent."
 const failDefaultMsg = "Your patient cannot make a reasoned decision about their medical treatment."
 
+let backendUrl = '';
+fetch('./config.json')
+    .then(response => response.json())
+    .then(config => {
+        backendUrl = config.backendUrl;
+    }).catch(err => {
+        document.getElementById('btn-send-email').remove();
+    });
+
 email = '';
 patientName='';
 questionHistory = [];
@@ -147,11 +156,43 @@ async function downloadAnswersPdf(isEmail) {
         }
         heightTicker += 0.9*lineHeight;
     });
+    let fileName = (patientName === '' ? new Date().toLocaleTimeString() : patientName) + ' - cappacity log.pdf';
     if (isEmail) {
-        mailtoUrl = `mailto:${email}?subject=Cappacity Assessment&body=Please find the cappacity assessment for ${answersJson.patientName} attached.`;
-        window.location.href = mailtoUrl;
+        // Prepare the PDF as a blob
+        const pdfBlob = await doc.output('blob', { filename: fileName });
+
+        // Form Data to send
+        const formData = new FormData();
+        formData.append('email', email);
+        formData.append('file', pdfBlob, fileName);
+
+        fetch(backendUrl + '/api/sendEmail.php', {
+            method: 'POST',
+            body: formData
+        }).then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                alert("Email sent successfully!");
+            } else {
+                alert("Failed to send email: " + (data.message || ""));
+            }
+        })
+        .catch(err => {
+            alert("There was an error sending the email. Please try again later.");
+            console.error(err);
+        });
     } else {
-        doc.save((patientName === '' ? new Date().toLocaleTimeString() : patientName) + ' - cappacity log.pdf');
+        doc.save(fileName);
+    }
+}
+
+function promptEmail() {
+    const emailPrompt = prompt('Please enter the recipient email address:');
+    if (emailPrompt && emailPrompt.trim() !== '') {
+        email = emailPrompt.trim();
+        downloadAnswersPdf(true);
+    } else if (emailPrompt !== null) {
+        alert('Email address is required to send the answer log.');
     }
 }
 

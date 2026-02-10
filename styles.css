@@ -160,6 +160,11 @@ body {
     transform: translateY(-2px);
 }
 
+.download-email-flex-group {
+    display: flex;
+    justify-content: space-between;
+}
+
 .button-start-group {
     display: flex;
     gap: 15px;

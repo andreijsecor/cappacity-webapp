@@ -47,9 +47,14 @@
                     <button class="btn btn-reset" onclick="resetAnswers()">🔄 Restart</button>
                 </div>
             </div>
-            <button class="btn btn-download-history" onclick="downloadAnswersPdf(false)">
-                ⬇️ Download answer log as PDF
-            </button>
+            <div class="download-email-flex-group">
+                <button id="btn-download-pdf" class="btn btn-download-history" onclick="downloadAnswersPdf(false)">
+                    ⬇️ Download answer log as PDF
+                </button>
+                <button id="btn-send-email" class="btn btn-download-history" onclick="promptEmail()">
+                    ⬇️ Send answer log via email
+                </button>
+            </div>
         </div>
     </div>
     <!-- Libraries -->
