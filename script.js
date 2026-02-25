@@ -7,8 +7,17 @@ const questionsPromise = fetch(questionPath).then(response => response.json());
 const passDefaultMsg = "Your patient has demonstrated an ability to communicate a choice, understand the relavant information, appreciate the situation and its consequences, and identify rational reasoning for making their decisions. Therefore, to a reasonable degree of medical certainty, your patient has the capacity to make decisions with informed consent."
 const failDefaultMsg = "Your patient cannot make a reasoned decision about their medical treatment."
 
+let configPath = './config.json';
+fetch('./local-config.json')
+    .then(response => response.json())
+    .then(config => {
+        if (config.override) {
+            configPath = './local-config.json';
+        }
+    });
+
 let backendUrl = '';
-fetch('./config.json')
+fetch(configPath)
     .then(response => response.json())
     .then(config => {
         backendUrl = config.backendUrl;
@@ -169,12 +178,13 @@ async function downloadAnswersPdf(isEmail) {
         fetch(backendUrl + '/api/sendEmail.php', {
             method: 'POST',
             body: formData
-        }).then(response => response.json())
-        .then(data => {
-            if (data.success) {
+        }).then(response => {
+            if (response.ok) {
                 alert("Email sent successfully!");
             } else {
-                alert("Failed to send email: " + (data.message || ""));
+                response.json().then(body => {
+                    alert("Failed to send email: " + (body.error || ""));
+                });
             }
         })
         .catch(err => {
