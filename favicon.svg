@@ -1,0 +1,38 @@
+<svg width="256" height="256" viewBox="0 0 256 256" xmlns="http://www.w3.org/2000/svg">
+
+  <!-- Gradient Definition -->
+  <defs>
+    <linearGradient id="grad" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#667eea"/>
+      <stop offset="100%" stop-color="#764ba2"/>
+    </linearGradient>
+  </defs>
+
+  <!-- Background -->
+  <rect width="256" height="256" rx="48" fill="url(#grad)"/>
+
+  <!-- Centered + Enlarged Inner Icon -->
+  <g transform="translate(128 128) scale(1.08) translate(-128 -128)">
+
+    <!-- Stylized "C" -->
+    <path d="M90,70 
+             C65,70 65,130 90,130
+             L150,130
+             C175,130 175,105 150,105
+             L110,105
+             C110,85 130,85 130,85"
+          fill="none"
+          stroke="white"
+          stroke-width="20"
+          stroke-linecap="round"
+          stroke-linejoin="round"/>
+
+    <!-- Gauge tick -->
+    <line x1="140" y1="160" x2="165" y2="185"
+          stroke="white"
+          stroke-width="20"
+          stroke-linecap="round"/>
+
+  </g>
+
+</svg>
