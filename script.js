@@ -11,7 +11,7 @@ let configPath = './config.json';
 fetch('./local-config.json')
     .then(response => response.json())
     .then(config => {
-        if (config.override) {
+        if (!config.testGlobal) {
             configPath = './local-config.json';
         }
     });
