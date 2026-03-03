@@ -46,6 +46,8 @@ function startAssessment(includeName) {
     } else {
         patientName = '';
     }
+    // Set email value from input, blank if not provided or not included
+    email = document.getElementById('emailInput').value.trim();
     document.querySelector('.patient-name').textContent = patientName === '' ? 'Anonymous Patient' : "Patient: " + patientName;
     document.querySelector('.start-screen').setAttribute('hidden', true);
     document.querySelector('.main-screen').hidden = false;
@@ -99,110 +101,119 @@ function uploadAnswersJson(event) {
 }
 
 async function downloadAnswersPdf(isEmail) {
-    const doc = new jsPDF({unit: 'pt'});
-    const questions = (await questionsPromise).questions;
-    const answersJson = JSON.parse(saveAnswersJson());
-    const marginHorizontal = 36;
-    const marginVertical = 54;
-    const indent = 36;
-    const pageWidth = doc.internal.pageSize.getWidth() - 2*marginHorizontal;
-    const pageHeight = doc.internal.pageSize.getHeight() - 2*marginVertical;
-    const font = "helvetica";
-    const fontSize = 16;
-    const titleFontSize = 36;
-    const lineHeight = fontSize*doc.getLineHeightFactor();
-    const titleLineHeight = titleFontSize*doc.getLineHeightFactor();
-    let heightTicker = marginVertical;
-    //title
-    doc.setFontSize(titleFontSize);
-    doc.setTextColor("#667eea");
-    doc.text("Cappacity Assessment", doc.internal.pageSize.getWidth()/2, heightTicker + titleFontSize/2, {maxWidth: pageWidth, align: "center"});
-    doc.setFontSize(fontSize);
-    doc.setTextColor("#000");
-    heightTicker += titleLineHeight + 0.5*lineHeight;
-    //patient
-    if (answersJson.patientName !== '') {
-        doc.text(`Patient: ${answersJson.patientName}`, doc.internal.pageSize.getWidth()/2, heightTicker, {maxWidth: pageWidth, align: "center"});
+    const buttons = Array.from(document.querySelectorAll("button")).filter(btn => !btn.disabled);
+    buttons.forEach(btn => btn.disabled = true);
+    try {
+        const doc = new jsPDF({unit: 'pt'});
+        const questions = (await questionsPromise).questions;
+        const answersJson = JSON.parse(saveAnswersJson());
+        const marginHorizontal = 36;
+        const marginVertical = 54;
+        const indent = 36;
+        const pageWidth = doc.internal.pageSize.getWidth() - 2*marginHorizontal;
+        const pageHeight = doc.internal.pageSize.getHeight() - 2*marginVertical;
+        const font = "helvetica";
+        const fontSize = 16;
+        const titleFontSize = 36;
+        const lineHeight = fontSize*doc.getLineHeightFactor();
+        const titleLineHeight = titleFontSize*doc.getLineHeightFactor();
+        let heightTicker = marginVertical;
+        //title
+        doc.setFontSize(titleFontSize);
+        doc.setTextColor("#667eea");
+        doc.text("Cappacity Assessment", doc.internal.pageSize.getWidth()/2, heightTicker + titleFontSize/2, {maxWidth: pageWidth, align: "center"});
+        doc.setFontSize(fontSize);
+        doc.setTextColor("#000");
+        heightTicker += titleLineHeight + 0.5*lineHeight;
+        //patient
+        if (answersJson.patientName !== '') {
+            doc.text(`Patient: ${answersJson.patientName}`, doc.internal.pageSize.getWidth()/2, heightTicker, {maxWidth: pageWidth, align: "center"});
+            heightTicker += lineHeight;
+        }
+        //date
+        doc.text(`Date: ${new Date().toLocaleDateString()}`, doc.internal.pageSize.getWidth()/2, heightTicker, {maxWidth: pageWidth, align: "center"});
         heightTicker += lineHeight;
-    }
-    //date
-    doc.text(`Date: ${new Date().toLocaleDateString()}`, doc.internal.pageSize.getWidth()/2, heightTicker, {maxWidth: pageWidth, align: "center"});
-    heightTicker += lineHeight;
-    //time
-    doc.text(`Time: ${new Date().toLocaleTimeString()}`, doc.internal.pageSize.getWidth()/2, heightTicker, {maxWidth: pageWidth, align: "center"});
-    heightTicker += 2*lineHeight;
-    //result
-    doc.text(`Assesment result: ${answersJson.isCapable == 1 ? 'CAPABLE' : answersJson.isCapable == 0 ? 'NOT CAPABLE' : 'INCOMPLETE'}`, marginHorizontal, heightTicker, {maxWidth: pageWidth});
-    heightTicker += lineHeight;
-    //answers
-    doc.text("Answers:", marginHorizontal, heightTicker, {maxWidth: pageWidth});
-    heightTicker += 2*lineHeight;
-    //questions
-    [...answersJson.answerHistory, answersJson.currentAnswer].forEach(answer => {
-        const qText = `Question: ${questions[answer.index].question.join('\n')}`;
-        const qLen = doc.splitTextToSize(qText, pageWidth-indent).length;
-        const aText = `Answer: ${answer.answer == 0 ? 'YES' : answer.answer == 1 ? 'NO' : answer.answer == 2 ? 'MAYBE' : 'INCOMPLETE'}`;
-        const aLen = doc.splitTextToSize(aText, pageWidth-indent).length;
-        const nText = answer.notes === '' ? '' : `Notes: ${answer.notes}`;
-        const nLen = nText === '' ? 0 : doc.splitTextToSize(nText, pageWidth-indent).length;
-        //allocate room on page
-        if (heightTicker + lineHeight*(0.2+qLen+aLen+nLen) > pageHeight) {
-            doc.addPage();
-            heightTicker = marginVertical;
-        }
-        //question
-        doc.text(qText, marginHorizontal+indent, heightTicker, {maxWidth: pageWidth-indent});
-        heightTicker += lineHeight*(0.1+qLen);
-        //answer
-        doc.text(aText, marginHorizontal+indent, heightTicker, {maxWidth: pageWidth-indent});
-        heightTicker += lineHeight*(0.1+aLen);
-        //notes
-        if (nLen > 0) {
-            doc.setFont(font, "italic");
-            doc.text(nText, marginHorizontal+indent, heightTicker, {maxWidth: pageWidth-indent});
-            doc.setFont(font, "normal");
-            heightTicker += lineHeight*(0.1+nLen);
-        }
-        heightTicker += 0.9*lineHeight;
-    });
-    let fileName = (patientName === '' ? new Date().toLocaleTimeString() : patientName) + ' - cappacity log.pdf';
-    if (isEmail) {
-        // Prepare the PDF as a blob
-        const pdfBlob = await doc.output('blob', { filename: fileName });
-
-        // Form Data to send
-        const formData = new FormData();
-        formData.append('email', email);
-        formData.append('file', pdfBlob, fileName);
-
-        fetch(backendUrl + '/api/sendEmail.php', {
-            method: 'POST',
-            body: formData
-        }).then(response => {
-            if (response.ok) {
-                alert("Email sent successfully!");
-            } else {
-                response.json().then(body => {
-                    alert("Failed to send email: " + (body.error || ""));
-                });
+        //time
+        doc.text(`Time: ${new Date().toLocaleTimeString()}`, doc.internal.pageSize.getWidth()/2, heightTicker, {maxWidth: pageWidth, align: "center"});
+        heightTicker += 2*lineHeight;
+        //result
+        doc.text(`Assesment result: ${answersJson.isCapable == 1 ? 'CAPABLE' : answersJson.isCapable == 0 ? 'NOT CAPABLE' : 'INCOMPLETE'}`, marginHorizontal, heightTicker, {maxWidth: pageWidth});
+        heightTicker += lineHeight;
+        //answers
+        doc.text("Answers:", marginHorizontal, heightTicker, {maxWidth: pageWidth});
+        heightTicker += 2*lineHeight;
+        //questions
+        [...answersJson.answerHistory, answersJson.currentAnswer].forEach(answer => {
+            const qText = `Question: ${questions[answer.index].question.join('\n')}`;
+            const qLen = doc.splitTextToSize(qText, pageWidth-indent).length;
+            const aText = `Answer: ${answer.answer == 0 ? 'YES' : answer.answer == 1 ? 'NO' : answer.answer == 2 ? 'MAYBE' : 'INCOMPLETE'}`;
+            const aLen = doc.splitTextToSize(aText, pageWidth-indent).length;
+            const nText = answer.notes === '' ? '' : `Notes: ${answer.notes}`;
+            const nLen = nText === '' ? 0 : doc.splitTextToSize(nText, pageWidth-indent).length;
+            //allocate room on page
+            if (heightTicker + lineHeight*(0.2+qLen+aLen+nLen) > pageHeight) {
+                doc.addPage();
+                heightTicker = marginVertical;
             }
-        })
-        .catch(err => {
-            alert("There was an error sending the email. Please try again later.");
-            console.error(err);
+            //question
+            doc.text(qText, marginHorizontal+indent, heightTicker, {maxWidth: pageWidth-indent});
+            heightTicker += lineHeight*(0.1+qLen);
+            //answer
+            doc.text(aText, marginHorizontal+indent, heightTicker, {maxWidth: pageWidth-indent});
+            heightTicker += lineHeight*(0.1+aLen);
+            //notes
+            if (nLen > 0) {
+                doc.setFont(font, "italic");
+                doc.text(nText, marginHorizontal+indent, heightTicker, {maxWidth: pageWidth-indent});
+                doc.setFont(font, "normal");
+                heightTicker += lineHeight*(0.1+nLen);
+            }
+            heightTicker += 0.9*lineHeight;
         });
-    } else {
-        doc.save(fileName);
+        let fileName = (patientName === '' ? new Date().toLocaleTimeString() : patientName) + ' - cappacity log.pdf';
+        if (isEmail) {
+            // Prepare the PDF as a blob
+            const pdfBlob = await doc.output('blob', { filename: fileName });
+
+            // Form Data to send
+            const formData = new FormData();
+            formData.append('email', email);
+            formData.append('file', pdfBlob, fileName);
+
+            await fetch(backendUrl + '/api/sendEmail.php', {
+                method: 'POST',
+                body: formData
+            }).then(response => {
+                if (response.ok) {
+                    alert("Email sent successfully!");
+                } else {
+                    response.json().then(body => {
+                        alert("Failed to send email: " + (body.error || ""));
+                    });
+                }
+            }).catch(err => {
+                alert("There was an error sending the email. Please try again later.");
+                console.error(err);
+            });
+        } else {
+            doc.save(fileName);
+        }
+    } finally {
+        buttons.forEach(btn => btn.disabled = false);
     }
 }
 
 function promptEmail() {
-    const emailPrompt = prompt('Please enter the recipient email address:');
-    if (emailPrompt && emailPrompt.trim() !== '') {
-        email = emailPrompt.trim();
+    if (email === '') {
+        const emailPrompt = prompt('Please enter the recipient email address:');
+        if (emailPrompt && emailPrompt.trim() !== '') {
+            email = emailPrompt.trim();
+            downloadAnswersPdf(true);
+        } else if (emailPrompt !== null) {
+            alert('Email address is required to send the answer log.');
+        }
+    } else {
         downloadAnswersPdf(true);
-    } else if (emailPrompt !== null) {
-        alert('Email address is required to send the answer log.');
     }
 }
 
