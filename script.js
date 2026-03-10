@@ -23,6 +23,7 @@ fetch(configPath)
         backendUrl = config.backendUrl;
     }).catch(err => {
         document.getElementById('btn-send-email').remove();
+        console.error(err);
     });
 
 email = '';
@@ -183,7 +184,8 @@ async function downloadAnswersPdf(isEmail) {
             await fetch(backendUrl + '/api/sendEmail.php', {
                 method: 'POST',
                 body: formData
-            }).then(response => {
+            })
+            .then(response => {
                 if (response.ok) {
                     alert("Email sent successfully!");
                 } else {
@@ -191,7 +193,8 @@ async function downloadAnswersPdf(isEmail) {
                         alert("Failed to send email: " + (body.error || ""));
                     });
                 }
-            }).catch(err => {
+            })
+            .catch(err => {
                 alert("There was an error sending the email. Please try again later.");
                 console.error(err);
             });

@@ -163,6 +163,8 @@ body {
 .download-email-flex-group {
     display: flex;
     justify-content: space-between;
+    gap: 15px;
+    flex-wrap: wrap;
 }
 
 .button-start-group {
@@ -329,8 +331,17 @@ body {
         text-wrap: wrap;
     }
 
-    .btn-download-history {
-        min-width: 100%;
+    .download-email-flex-group {
+        flex-direction: column;
+        align-items: stretch;
+        margin-top: 20px;
+    }
+
+    .download-email-flex-group .btn-download-history {
+        margin-top: 0;
+        min-width: 0;
+        width: 100%;
+        max-width: none;
     }
 }
 
