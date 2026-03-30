@@ -7,17 +7,16 @@ const questionsPromise = fetch(questionPath).then(response => response.json());
 const passDefaultMsg = "Your patient has demonstrated an ability to communicate a choice, understand the relavant information, appreciate the situation and its consequences, and identify rational reasoning for making their decisions. Therefore, to a reasonable degree of medical certainty, your patient has the capacity to make decisions with informed consent."
 const failDefaultMsg = "Your patient cannot make a reasoned decision about their medical treatment."
 
-let configPath = './config.json';
-fetch('./local-config.json')
+const configPathPromise = fetch('./local-config.json')
     .then(response => response.json())
-    .then(config => {
-        if (!config.testGlobal) {
-            configPath = './local-config.json';
-        }
+    .then(config => config.testGlobal ? './config.json' : './local-config.json')
+    .catch(err => {
+        console.error(err);
+        return './config.json';
     });
 
 let backendUrl = '';
-fetch(configPath)
+configPathPromise.then(configPath => fetch(configPath))
     .then(response => response.json())
     .then(config => {
         backendUrl = config.backendUrl;
