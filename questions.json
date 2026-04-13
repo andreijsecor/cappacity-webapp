@@ -3,12 +3,18 @@
     "questions": [
         {
             "_qname": "Q1",
-            "question": [
-                "Can your patient communicate a choice—that is, respond to you and express a decision about their care?",
-                "Guiding questions that may help you decide:",
-                "- Can they respond when you ask about their preferences or the plan?",
-                "- Can they indicate agreement, disagreement, or a preference (including nonverbally, if needed)?",
-                "- If unclear, have you tried rephrasing or offering simple alternatives?"
+            "mainQuestion": {
+                "text": "Can your patient communicate a choice—that is, respond to you and express a decision about their care?"
+            },
+            "guiding": [
+                {
+                    "heading": "Guiding questions that may help you decide:",
+                    "items": [
+                        { "text": "Can they respond when you ask about their preferences or the plan?", "yesNo": true },
+                        { "text": "Can they indicate agreement, disagreement, or a preference (including nonverbally, if needed)?", "yesNo": true },
+                        { "text": "If unclear, have you tried rephrasing or offering simple alternatives?", "yesNo": true }
+                    ]
+                }
             ],
             "yes": 1,
             "no": 2,
@@ -16,12 +22,18 @@
         },
         {
             "_qname": "R1A-Q2",
-            "question": [
-                "Can the patient clearly tell you their preferred choice of medical treatment?",
-                "Guiding questions that may help you decide:",
-                "- Can they name or identify the option they want (or clearly refuse one)?",
-                "- Is the choice specific enough to act on for this decision?",
-                "- If they waver, can they still state a leaning or interim preference?"
+            "mainQuestion": {
+                "text": "Can the patient clearly tell you their preferred choice of medical treatment?"
+            },
+            "guiding": [
+                {
+                    "heading": "Guiding questions that may help you decide:",
+                    "items": [
+                        { "text": "Can they name or identify the option they want (or clearly refuse one)?", "yesNo": true },
+                        { "text": "Is the choice specific enough to act on for this decision?", "yesNo": true },
+                        { "text": "If they waver, can they still state a leaning or interim preference?", "yesNo": true }
+                    ]
+                }
             ],
             "yes": true,
             "no": 3,
@@ -30,12 +42,18 @@
         },
         {
             "_qname": "R1B-Q2",
-            "question": [
-                "Patients who cannot communicate typically cannot exercise capacity for these decisions. Do you want to continue evaluating whether capacity might still be present (for example, through other modes of communication)?",
-                "Guiding questions that may help you decide:",
-                "- Have you tried alternative modes (writing, gestures, boards, devices, or familiar interpreters)?",
-                "- Is there any consistent, interpretable response that could reflect a choice?",
-                "- If communication remains impossible, has surrogate or proxy decision-making been considered?"
+            "mainQuestion": {
+                "text": "Patients who cannot communicate typically cannot exercise capacity for these decisions. Do you want to continue evaluating whether capacity might still be present (for example, through other modes of communication)?"
+            },
+            "guiding": [
+                {
+                    "heading": "Guiding questions that may help you decide:",
+                    "items": [
+                        { "text": "Have you tried alternative modes (writing, gestures, boards, devices, or familiar interpreters)?", "yesNo": true },
+                        { "text": "Is there any consistent, interpretable response that could reflect a choice?", "yesNo": true },
+                        { "text": "If communication remains impossible, has surrogate or proxy decision-making been considered?", "yesNo": true }
+                    ]
+                }
             ],
             "yes": 3,
             "no": false,
@@ -43,12 +61,18 @@
         },
         {
             "_qname": "R1C-Q2",
-            "question": [
-                "Was the patient able to appropriately answer when you explored their treatment decision?",
-                "Guiding questions you may ask the patient:",
-                "- Have you decided whether to follow your doctor's [or my] recommendation for treatment?",
-                "- Can you tell me what that decision is?",
-                "- If they have not decided: What is making it hard for you to decide?"
+            "mainQuestion": {
+                "text": "Was the patient able to appropriately answer when you explored their treatment decision?"
+            },
+            "guiding": [
+                {
+                    "heading": "Guiding questions you may ask the patient:",
+                    "items": [
+                        { "text": "Have you decided whether to follow your doctor's [or my] recommendation for treatment?", "yesNo": true },
+                        { "text": "Can you tell me what that decision is?", "yesNo": true },
+                        { "text": "If they have not decided: What is making it hard for you to decide?", "yesNo": true }
+                    ]
+                }
             ],
             "yes": 4,
             "no": false,
@@ -56,14 +80,20 @@
         },
         {
             "_qname": "R1C-R2A-Q3",
-            "question": [
-                "Does your patient adequately understand what they were told about their condition, the recommended treatment, and the alternatives?",
-                "Guiding questions you may ask—what did your doctor [or I] tell you about:",
-                "- The problem with your health now",
-                "- The recommended treatment",
-                "- The possible benefits and risks (or discomforts) of the treatment",
-                "- Any alternative treatments and their risks and benefits",
-                "- The risks and benefits of no treatment"
+            "mainQuestion": {
+                "text": "Does your patient adequately understand what they were told about their condition, the recommended treatment, and the alternatives?"
+            },
+            "guiding": [
+                {
+                    "heading": "Guiding questions you may ask—what did your doctor [or I] tell you about:",
+                    "items": [
+                        { "text": "The problem with your health now", "yesNo": true },
+                        { "text": "The recommended treatment", "yesNo": true },
+                        { "text": "The possible benefits and risks (or discomforts) of the treatment", "yesNo": true },
+                        { "text": "Any alternative treatments and their risks and benefits", "yesNo": true },
+                        { "text": "The risks and benefits of no treatment", "yesNo": true }
+                    ]
+                }
             ],
             "yes": 5,
             "no": false,
@@ -72,15 +102,21 @@
         },
         {
             "_qname": "R1C-R2A-R3A-Q4",
-            "question": [
-                "Does your patient's answers show they appreciate their situation—that they grasp their condition, the proposed treatment, and what is likely to happen with or without it?",
-                "Guiding questions you may ask the patient:",
-                "- What do you believe is wrong with your health now?",
-                "- Do you believe that you need some kind of treatment?",
-                "- What is treatment likely to do for you?",
-                "- What makes you believe it will have that effect?",
-                "- What do you believe will happen if you are not treated?",
-                "- Why do you think your doctor has [or I have] recommended this treatment?"
+            "mainQuestion": {
+                "text": "Does your patient's answers show they appreciate their situation—that they grasp their condition, the proposed treatment, and what is likely to happen with or without it?"
+            },
+            "guiding": [
+                {
+                    "heading": "Guiding questions you may ask the patient:",
+                    "items": [
+                        { "text": "What do you believe is wrong with your health now?", "yesNo": true },
+                        { "text": "Do you believe that you need some kind of treatment?", "yesNo": true },
+                        { "text": "What is treatment likely to do for you?", "yesNo": true },
+                        { "text": "What makes you believe it will have that effect?", "yesNo": true },
+                        { "text": "What do you believe will happen if you are not treated?", "yesNo": true },
+                        { "text": "Why do you think your doctor has [or I have] recommended this treatment?", "yesNo": true }
+                    ]
+                }
             ],
             "yes": 6,
             "no": false,
@@ -89,11 +125,17 @@
         },
         {
             "_qname": "R1C-R2A-R3A-R4A-Q5",
-            "question": [
-                "Can your patient explain, in a coherent way, how they used this information to accept or reject the recommended treatment?",
-                "Guiding questions you may ask the patient:",
-                "- How did you decide to accept or reject the recommended treatment?",
-                "- What makes [chosen option] better than [alternative option]?"
+            "mainQuestion": {
+                "text": "Can your patient explain, in a coherent way, how they used this information to accept or reject the recommended treatment?"
+            },
+            "guiding": [
+                {
+                    "heading": "Guiding questions you may ask the patient:",
+                    "items": [
+                        { "text": "How did you decide to accept or reject the recommended treatment?", "yesNo": true },
+                        { "text": "What makes [chosen option] better than [alternative option]?", "yesNo": true }
+                    ]
+                }
             ],
             "yes": true,
             "no": false,

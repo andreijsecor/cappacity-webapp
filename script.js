@@ -7,6 +7,112 @@ const questionsPromise = fetch(questionPath).then(response => response.json());
 const passDefaultMsg = "Your patient has demonstrated an ability to communicate a choice, understand the relavant information, appreciate the situation and its consequences, and identify rational reasoning for making their decisions. Therefore, to a reasonable degree of medical certainty, your patient has the capacity to make decisions with informed consent."
 const failDefaultMsg = "Your patient cannot make a reasoned decision about their medical treatment."
 
+/** @param {string|{text: string, yesNo?: boolean}} item */
+function normalizeGuidingItem(item) {
+    if (typeof item === 'string') {
+        return { text: item, yesNo: false };
+    }
+    return { text: item.text, yesNo: Boolean(item.yesNo) };
+}
+
+/** @param {object} q @param {Record<string, number>|undefined} guidingAnswers 0=yes, 1=no */
+function questionToPlainLines(q, guidingAnswers) {
+    const ga = guidingAnswers && typeof guidingAnswers === 'object' ? guidingAnswers : {};
+    const lines = [q.mainQuestion.text];
+    q.guiding.forEach((block, bi) => {
+        lines.push(block.heading);
+        block.items.forEach((item, ii) => {
+            const { text, yesNo } = normalizeGuidingItem(item);
+            const key = `${bi}-${ii}`;
+            let line = `- ${text}`;
+            if (yesNo) {
+                const v = ga[key];
+                line += v === 0 ? ' [Yes]' : v === 1 ? ' [No]' : '';
+            }
+            lines.push(line);
+        });
+    });
+    return lines;
+}
+
+/** @param {object} node */
+function ensureGuidingAnswers(node) {
+    if (!node.guidingAnswers || typeof node.guidingAnswers !== 'object') {
+        node.guidingAnswers = {};
+    }
+}
+
+/** @param {HTMLElement} element @param {object} q @param {object} answerNode */
+function renderQuestionInto(element, q, answerNode) {
+    ensureGuidingAnswers(answerNode);
+    const ga = answerNode.guidingAnswers;
+    element.replaceChildren();
+    const mainP = document.createElement('p');
+    mainP.className = 'question-main';
+    mainP.textContent = q.mainQuestion.text;
+    element.appendChild(mainP);
+    q.guiding.forEach((block, bi) => {
+        const wrap = document.createElement('div');
+        wrap.className = 'guiding-block';
+        const heading = document.createElement('p');
+        heading.className = 'guiding-heading';
+        heading.textContent = block.heading;
+        wrap.appendChild(heading);
+        const ul = document.createElement('ul');
+        ul.className = 'guiding-items';
+        block.items.forEach((rawItem, ii) => {
+            const { text, yesNo } = normalizeGuidingItem(rawItem);
+            const li = document.createElement('li');
+            li.className = 'guiding-item';
+            const key = `${bi}-${ii}`;
+            if (yesNo) {
+                const row = document.createElement('div');
+                row.className = 'guiding-item-row';
+                const span = document.createElement('span');
+                span.className = 'guiding-item-text';
+                span.textContent = text;
+                row.appendChild(span);
+                const yn = document.createElement('span');
+                yn.className = 'guiding-yesno';
+                const mkBtn = (label, value) => {
+                    const b = document.createElement('button');
+                    b.type = 'button';
+                    b.className =
+                        value === 0 ? 'guiding-yn-btn guiding-yn-btn--yes' : 'guiding-yn-btn guiding-yn-btn--no';
+                    b.textContent = label;
+                    b.dataset.guidingKey = key;
+                    b.dataset.guidingValue = String(value);
+                    if (ga[key] === value) {
+                        b.classList.add('guiding-yn-btn--selected');
+                    }
+                    b.addEventListener('click', () => {
+                        const cur = ga[key];
+                        if (cur === value) {
+                            delete ga[key];
+                        } else {
+                            ga[key] = value;
+                        }
+                        yn.querySelectorAll('.guiding-yn-btn').forEach((btn) => {
+                            const v = Number(btn.dataset.guidingValue);
+                            btn.classList.toggle('guiding-yn-btn--selected', ga[key] === v);
+                        });
+                    });
+                    return b;
+                };
+                yn.appendChild(mkBtn('Y', 0));
+                yn.appendChild(mkBtn('N', 1));
+                row.appendChild(yn);
+                li.appendChild(row);
+            } else {
+                li.textContent = text;
+            }
+            ul.appendChild(li);
+        });
+        wrap.appendChild(ul);
+        element.appendChild(wrap);
+    });
+}
+
 const configPathPromise = fetch('./local-config.json')
     .then(response => response.json())
     .then(config => config.testGlobal ? './config.json' : './local-config.json')
@@ -32,7 +138,8 @@ isCapable = -1;
 answerNodeCache = {
     index: -1,
     answer: -1,
-    notes: ''
+    notes: '',
+    guidingAnswers: {}
 }
 
 function startAssessment() {
@@ -56,6 +163,8 @@ function loadAnswersJson(inputJson) {
     questionHistory = JSONBlob.answerHistory;
     answerNodeCache = JSONBlob.currentAnswer;
     isCapable = JSONBlob.isCapable;
+    questionHistory.forEach(ensureGuidingAnswers);
+    ensureGuidingAnswers(answerNodeCache);
     questionViewIndex = questionHistory.length;
     updateQuestionView();
     updateAnswerView();
@@ -123,7 +232,7 @@ async function downloadAnswersPdf(isEmail) {
         heightTicker += 2*lineHeight;
         //questions
         [...answersJson.answerHistory, answersJson.currentAnswer].forEach(answer => {
-            const qText = `Question: ${questions[answer.index].question.join('\n')}`;
+            const qText = `Question: ${questionToPlainLines(questions[answer.index], answer.guidingAnswers).join('\n')}`;
             const qLen = doc.splitTextToSize(qText, pageWidth-indent).length;
             const aText = `Answer: ${answer.answer == 0 ? 'YES' : answer.answer == 1 ? 'NO' : answer.answer == 2 ? 'MAYBE' : 'INCOMPLETE'}`;
             const aLen = doc.splitTextToSize(aText, pageWidth-indent).length;
@@ -203,7 +312,8 @@ function resetAnswers() {
     answerNodeCache = {
         index: -1,
         answer: -1,
-        notes: ''
+        notes: '',
+        guidingAnswers: {}
     }
     questionViewIndex = 0;
     document.getElementById('answerInput').value = '';
@@ -251,6 +361,9 @@ async function renderVerdict(passed) {
     // Disable navigation and answer buttons
     document.querySelector('.btn.btn-nav[onclick*="viewNext"]').disabled = true;
     document.querySelector('.button-group').querySelectorAll('.btn').forEach(btn => btn.disabled = true);
+    document.querySelectorAll('.guiding-yn-btn').forEach((btn) => {
+        btn.disabled = true;
+    });
 }
 
 async function submitAnswer() {
@@ -279,7 +392,8 @@ async function submitAnswer() {
         answerNodeCache = {
             index: nextIndex,
             answer: -1,
-            notes: ''
+            notes: '',
+            guidingAnswers: {}
         }
         questionViewIndex = questionHistory.length;
         await updateQuestionView();
@@ -313,13 +427,10 @@ async function updateQuestionView() {
     if (nextBtn) {
         nextBtn.disabled = (questionViewIndex > questionHistory.length) || (questionViewIndex == questionHistory.length && answerNodeCache.answer == -1);
     }
-    // Get next question
-    questionElement.innerHTML = '';
-    questions[questionViewIndex >= questionHistory.length ? answerNodeCache.index : questionHistory[questionViewIndex].index].question.forEach(question => {
-        questionElement.appendChild(document.createElement('br'));
-        questionElement.lastChild.after(question);
-    });
-    questionElement.removeChild(questionElement.firstChild);
+    const answerNode = questionViewIndex >= questionHistory.length ? answerNodeCache : questionHistory[questionViewIndex];
+    ensureGuidingAnswers(answerNode);
+    const q = questions[answerNode.index];
+    renderQuestionInto(questionElement, q, answerNode);
     
     // Add animation
     questionElement.style.opacity = '0';
