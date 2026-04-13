@@ -61,13 +61,6 @@ body {
     font-weight: 300;
 }
 
-.patient-name {
-    color: #555;
-    font-size: 1.5rem;
-    font-weight: 300;
-    margin-top: 10px;
-}
-
 .question-section {
     background: #f8f9ff;
     border-radius: 15px;
@@ -138,7 +131,7 @@ body {
 .btn-start {
     background: linear-gradient(135deg, #667eea, #764ba2);
     color: white;
-    flex-grow: 0;
+    flex-grow: 1;
     text-wrap: nowrap;
 }
 

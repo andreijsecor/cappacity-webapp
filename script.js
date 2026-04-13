@@ -26,7 +26,6 @@ configPathPromise.then(configPath => fetch(configPath))
     });
 
 email = '';
-patientName='';
 questionHistory = [];
 questionViewIndex = 0;
 isCapable = -1;
@@ -36,19 +35,7 @@ answerNodeCache = {
     notes: ''
 }
 
-function startAssessment(includeName) {
-    if (includeName && document.getElementById('patientNameInput').value.trim() === "") {
-        alert("Please enter the patient's name before starting the assessment.");
-        return;
-    }
-    if (includeName) {
-        patientName = document.getElementById('patientNameInput').value;
-    } else {
-        patientName = '';
-    }
-    // Set email value from input, blank if not provided or not included
-    email = document.getElementById('emailInput').value.trim();
-    document.querySelector('.patient-name').textContent = patientName === '' ? 'Anonymous Patient' : "Patient: " + patientName;
+function startAssessment() {
     document.querySelector('.start-screen').setAttribute('hidden', true);
     document.querySelector('.main-screen').hidden = false;
 }
@@ -56,7 +43,6 @@ function startAssessment(includeName) {
 function saveAnswersJson() {
     answerNodeCache.notes = document.getElementById('answerInput').value;
     const JSONBlob = {
-        patientName: patientName,
         answerHistory: questionHistory,
         currentAnswer: answerNodeCache,
         isCapable: isCapable
@@ -67,12 +53,10 @@ function saveAnswersJson() {
 
 function loadAnswersJson(inputJson) {
     const JSONBlob = JSON.parse(inputJson);
-    patientName = JSONBlob.patientName;
     questionHistory = JSONBlob.answerHistory;
     answerNodeCache = JSONBlob.currentAnswer;
     isCapable = JSONBlob.isCapable;
     questionViewIndex = questionHistory.length;
-    document.querySelector('.patient-name').textContent = "Patient: " + patientName;
     updateQuestionView();
     updateAnswerView();
     document.querySelector('.start-screen').hidden = true;
@@ -85,7 +69,7 @@ function downloadAnswersJson() {
     const url = URL.createObjectURL(blob);
     const a = document.createElement('a');
     a.href = url;
-    a.download = patientName + ' - cappacity log.json';
+    a.download = new Date().toLocaleTimeString() + ' - cappacity log.json';
     a.click();
     URL.revokeObjectURL(url);
     a.remove();
@@ -125,11 +109,6 @@ async function downloadAnswersPdf(isEmail) {
         doc.setFontSize(fontSize);
         doc.setTextColor("#000");
         heightTicker += titleLineHeight + 0.5*lineHeight;
-        //patient
-        if (answersJson.patientName !== '') {
-            doc.text(`Patient: ${answersJson.patientName}`, doc.internal.pageSize.getWidth()/2, heightTicker, {maxWidth: pageWidth, align: "center"});
-            heightTicker += lineHeight;
-        }
         //date
         doc.text(`Date: ${new Date().toLocaleDateString()}`, doc.internal.pageSize.getWidth()/2, heightTicker, {maxWidth: pageWidth, align: "center"});
         heightTicker += lineHeight;
@@ -170,7 +149,7 @@ async function downloadAnswersPdf(isEmail) {
             }
             heightTicker += 0.9*lineHeight;
         });
-        let fileName = (patientName === '' ? new Date().toLocaleTimeString() : patientName) + ' - cappacity log.pdf';
+        let fileName = new Date().toLocaleTimeString() + ' - cappacity log.pdf';
         if (isEmail) {
             // Prepare the PDF as a blob
             const pdfBlob = await doc.output('blob', { filename: fileName });
@@ -230,7 +209,6 @@ function resetAnswers() {
     document.getElementById('answerInput').value = '';
     removeVerdict();
     document.querySelector('.button-group').querySelectorAll('.btn').forEach(btn => btn.disabled = false)
-    document.getElementById('patientNameInput').value = '';
     document.querySelector('.main-screen').hidden = true;
     document.querySelector('.start-screen').removeAttribute('hidden');
     updateQuestionView();
@@ -420,12 +398,6 @@ document.addEventListener('keydown', (event) => {
         viewPrevious();
     } else if ((event.key === 'ArrowRight' || event.key === 'Enter') && !document.getElementById('btn-next').disabled) {
         viewNext();
-    }
-});
-
-document.getElementById('patientNameInput').addEventListener('keydown', (event) => {
-    if (event.key === 'Enter') {
-        startAssessment();
     }
 });
 

@@ -3,14 +3,26 @@
     "questions": [
         {
             "_qname": "Q1",
-            "question": ["Is your patient able to communicate a choice? (Is your patient able to respond to you and express a decision?)"],
+            "question": [
+                "Can your patient communicate a choice—that is, respond to you and express a decision about their care?",
+                "Guiding questions that may help you decide:",
+                "- Can they respond when you ask about their preferences or the plan?",
+                "- Can they indicate agreement, disagreement, or a preference (including nonverbally, if needed)?",
+                "- If unclear, have you tried rephrasing or offering simple alternatives?"
+            ],
             "yes": 1,
             "no": 2,
             "maybe": 3
         },
         {
             "_qname": "R1A-Q2",
-            "question": ["Can the patient clearly tell you their preferred choice of medical treatment?"],
+            "question": [
+                "Can the patient clearly tell you their preferred choice of medical treatment?",
+                "Guiding questions that may help you decide:",
+                "- Can they name or identify the option they want (or clearly refuse one)?",
+                "- Is the choice specific enough to act on for this decision?",
+                "- If they waver, can they still state a leaning or interim preference?"
+            ],
             "yes": true,
             "no": 3,
             "maybe": 3,
@@ -18,21 +30,41 @@
         },
         {
             "_qname": "R1B-Q2",
-            "question": ["Patients without an ability to communicate do not have capacity for making medical decisions. Would you like to continue evaluating patient's potential capacity (Two examples of a patient being unable to communicate would be if the patient is unable to respond or unconsious. Please evaluate for alternative modes of commiunication if possible)?"],
+            "question": [
+                "Patients who cannot communicate typically cannot exercise capacity for these decisions. Do you want to continue evaluating whether capacity might still be present (for example, through other modes of communication)?",
+                "Guiding questions that may help you decide:",
+                "- Have you tried alternative modes (writing, gestures, boards, devices, or familiar interpreters)?",
+                "- Is there any consistent, interpretable response that could reflect a choice?",
+                "- If communication remains impossible, has surrogate or proxy decision-making been considered?"
+            ],
             "yes": 3,
             "no": false,
             "maybe": -1
         },
         {
             "_qname": "R1C-Q2",
-            "question": ["Please ask your patient the following questions:", "- Have you decided whether to follow your doctor's [or my] recommendation for treatment?", "- Can you tell me what that decision is?", "- [If no decision] What is making it hard for you to decide?", "Was the patient able to appropriately answer the questions above?"],
+            "question": [
+                "Was the patient able to appropriately answer when you explored their treatment decision?",
+                "Guiding questions you may ask the patient:",
+                "- Have you decided whether to follow your doctor's [or my] recommendation for treatment?",
+                "- Can you tell me what that decision is?",
+                "- If they have not decided: What is making it hard for you to decide?"
+            ],
             "yes": 4,
             "no": false,
             "maybe": -1
         },
         {
             "_qname": "R1C-R2A-Q3",
-            "question": ["Can your patient adequately answer the following questions: What did your doctor [or I] tell you about:", "- The problem with your health now", "- The recommended treatment", "- The possible benefits and risks (or discomforts) of the treatment", "- Any alternative treatments and their risks and benefits", "- The risks and benefits of no treatment"],
+            "question": [
+                "Does your patient adequately understand what they were told about their condition, the recommended treatment, and the alternatives?",
+                "Guiding questions you may ask—what did your doctor [or I] tell you about:",
+                "- The problem with your health now",
+                "- The recommended treatment",
+                "- The possible benefits and risks (or discomforts) of the treatment",
+                "- Any alternative treatments and their risks and benefits",
+                "- The risks and benefits of no treatment"
+            ],
             "yes": 5,
             "no": false,
             "maybe": -1,
@@ -40,7 +72,16 @@
         },
         {
             "_qname": "R1C-R2A-R3A-Q4",
-            "question": ["Is your patient able to describe their understanding of their medical condition, proposed treatment, and likely outcomes by answering the following questions:", "- What do you believe is wrong with your health now?", "- Do you believe that you need some kind of treatment?", "- What is treatment likely to do for you?", "- What makes you believe it will have that effect?", "- What do you believe will happen if you are not treated?", "- Why do you think your doctor has [or I have] recommended this treatment?"],
+            "question": [
+                "Does your patient's answers show they appreciate their situation—that they grasp their condition, the proposed treatment, and what is likely to happen with or without it?",
+                "Guiding questions you may ask the patient:",
+                "- What do you believe is wrong with your health now?",
+                "- Do you believe that you need some kind of treatment?",
+                "- What is treatment likely to do for you?",
+                "- What makes you believe it will have that effect?",
+                "- What do you believe will happen if you are not treated?",
+                "- Why do you think your doctor has [or I have] recommended this treatment?"
+            ],
             "yes": 6,
             "no": false,
             "maybe": -1,
@@ -48,7 +89,12 @@
         },
         {
             "_qname": "R1C-R2A-R3A-R4A-Q5",
-            "question": ["Can your patient engage in a rational process of manipulating the relevant information by answering the following questions:", "- How did you decide to accept or reject the recommended treatment?", "- What makes [chosen option] better than [alternative option]?"],
+            "question": [
+                "Can your patient explain, in a coherent way, how they used this information to accept or reject the recommended treatment?",
+                "Guiding questions you may ask the patient:",
+                "- How did you decide to accept or reject the recommended treatment?",
+                "- What makes [chosen option] better than [alternative option]?"
+            ],
             "yes": true,
             "no": false,
             "maybe": -1,

@@ -12,14 +12,12 @@
     <div class="container start-screen">
         <h1 class="title">Cappacity</h1>
         <p class="subtitle">Determine your patient's ability to make sound medical decisions</p>
-        <input type="text" id="patientNameInput" class="answer-input" placeholder="Enter patient name...">
-        <input type="text" id="emailInput" class="answer-input" placeholder="Enter email address (optional)...">
+        <div class="disclaimer" style="margin-top: 1.5em; color: #888; font-size: 0.93em; text-align: center;">
+            <strong>Disclaimer:</strong> This tool is intended for informational and educational purposes only and does not provide medical advice, diagnosis, or treatment. Decisions should be made by qualified healthcare professionals based on clinical judgment and in accordance with applicable guidelines.
+        </div>
         <div class="button-start-group">
-            <button class="btn btn-start" onclick="startAssessment(true)">
+            <button class="btn btn-start" onclick="startAssessment()">
                 Start Assessment
-            </button>
-            <button class="btn btn-start-second" onclick="startAssessment(false)">
-                Start with no name
             </button>
         </div>
     </div>
@@ -29,7 +27,6 @@
         <div class="header">
             <h1 class="title">Cappacity</h1>
             <p class="subtitle">Determine your patient's ability to make sound medical decisions</p>
-            <p class="patient-name"></p>
         </div>
 
         <div class="question-section">
