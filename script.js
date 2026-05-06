@@ -7,6 +7,16 @@ const questionsPromise = fetch(questionPath).then(response => response.json());
 const passDefaultMsg = "Your patient has demonstrated an ability to communicate a choice, understand the relavant information, appreciate the situation and its consequences, and identify rational reasoning for making their decisions. Therefore, to a reasonable degree of medical certainty, your patient has the capacity to make decisions with informed consent."
 const failDefaultMsg = "Your patient cannot make a reasoned decision about their medical treatment."
 
+const PDF_INK = '#252525';
+const PDF_TITLE = '#667eea';
+const PDF_YES = '#4d7a5c';
+const PDF_NO = '#a35f5f';
+const PDF_MAYBE = '#666666';
+
+/** Guiding follow-ups appended by `questionToPlainLines` (parsed for PDF coloring). */
+const PDF_GUIDING_SUFFIX_YES = ' [yes]';
+const PDF_GUIDING_SUFFIX_NO = ' [no]';
+
 /** @param {string|{text: string, yesNo?: boolean}} item */
 function normalizeGuidingItem(item) {
     if (typeof item === 'string') {
@@ -27,7 +37,11 @@ function questionToPlainLines(q, guidingAnswers) {
             let line = `- ${text}`;
             if (yesNo) {
                 const v = ga[key];
-                line += v === 0 ? ' [Yes]' : v === 1 ? ' [No]' : '';
+                if (v === 0) {
+                    line += PDF_GUIDING_SUFFIX_YES;
+                } else if (v === 1) {
+                    line += PDF_GUIDING_SUFFIX_NO;
+                }
             }
             lines.push(line);
         });
@@ -40,6 +54,132 @@ function ensureGuidingAnswers(node) {
     if (!node.guidingAnswers || typeof node.guidingAnswers !== 'object') {
         node.guidingAnswers = {};
     }
+}
+
+/**
+ * One wrapped row for PDF: draw left-to-right with per-segment colors (jsPDF basics).
+ * @param {{ text: string, color: string }[][]} rows
+ * @returns {number} y-coordinate just below the last row (next baseline would be here + spacing if desired)
+ */
+function pdfDrawTextRows(doc, rows, x, y0, lineHeight) {
+    let y = y0;
+    for (const row of rows) {
+        let xCursor = x;
+        for (const seg of row) {
+            doc.setTextColor(seg.color);
+            doc.text(seg.text, xCursor, y);
+            xCursor += doc.getTextWidth(seg.text);
+        }
+        y += lineHeight;
+    }
+    return y;
+}
+
+/**
+ * Split one logical string into wrapped rows; optional trailing guiding suffix is its own colored tail
+ * (same idea as drawing "Answer: " then a colored YES/NO).
+ * @returns {{ text: string, color: string }[][]}
+ */
+function pdfBuildWrappedRowsWithOptionalSuffix(doc, line, maxWidth) {
+    let body = line;
+    let suffix = null;
+    let suffixColor = null;
+    if (line.endsWith(PDF_GUIDING_SUFFIX_YES)) {
+        body = line.slice(0, -PDF_GUIDING_SUFFIX_YES.length);
+        suffix = PDF_GUIDING_SUFFIX_YES;
+        suffixColor = PDF_YES;
+    } else if (line.endsWith(PDF_GUIDING_SUFFIX_NO)) {
+        body = line.slice(0, -PDF_GUIDING_SUFFIX_NO.length);
+        suffix = PDF_GUIDING_SUFFIX_NO;
+        suffixColor = PDF_NO;
+    }
+    const rows = [];
+    if (!suffix) {
+        doc.splitTextToSize(body, maxWidth).forEach((chunk) => {
+            rows.push([{ text: chunk, color: PDF_INK }]);
+        });
+        return rows;
+    }
+    const chunks = doc.splitTextToSize(body, maxWidth);
+    if (chunks.length === 0) {
+        rows.push([{ text: suffix, color: suffixColor }]);
+        return rows;
+    }
+    for (let i = 0; i < chunks.length - 1; i++) {
+        rows.push([{ text: chunks[i], color: PDF_INK }]);
+    }
+    const last = chunks[chunks.length - 1];
+    const wLast = doc.getTextWidth(last);
+    const wSuf = doc.getTextWidth(suffix);
+    if (wLast + wSuf <= maxWidth) {
+        rows.push([
+            { text: last, color: PDF_INK },
+            { text: suffix, color: suffixColor },
+        ]);
+    } else {
+        rows.push([{ text: last, color: PDF_INK }]);
+        rows.push([{ text: suffix, color: suffixColor }]);
+    }
+    return rows;
+}
+
+function pdfCountQuestionLineRows(doc, qLines, maxWidth, font, fontSize) {
+    doc.setFont(font, 'normal');
+    doc.setFontSize(fontSize);
+    let n = 0;
+    for (let i = 0; i < qLines.length; i++) {
+        const physical = i === 0 ? `Question: ${qLines[i]}` : qLines[i];
+        n += pdfBuildWrappedRowsWithOptionalSuffix(doc, physical, maxWidth).length;
+    }
+    return n;
+}
+
+/** @returns {number} y after the full question block */
+function pdfDrawQuestionLines(doc, qLines, x, y0, maxWidth, lineHeight, font, fontSize) {
+    doc.setFont(font, 'normal');
+    doc.setFontSize(fontSize);
+    let y = y0;
+    for (let i = 0; i < qLines.length; i++) {
+        const physical = i === 0 ? `Question: ${qLines[i]}` : qLines[i];
+        const rows = pdfBuildWrappedRowsWithOptionalSuffix(doc, physical, maxWidth);
+        y = pdfDrawTextRows(doc, rows, x, y, lineHeight);
+    }
+    doc.setTextColor(PDF_INK);
+    return y;
+}
+
+function pdfMainAnswerWord(answer) {
+    switch (answer.answer) {
+        case 0:
+            return { word: 'YES', color: PDF_YES };
+        case 1:
+            return { word: 'NO', color: PDF_NO };
+        case 2:
+            return { word: 'MAYBE', color: PDF_MAYBE };
+        default:
+            return { word: 'INCOMPLETE', color: PDF_INK };
+    }
+}
+
+function pdfCountMainAnswerLines(doc, answer, maxWidth, font, fontSize) {
+    doc.setFont(font, 'normal');
+    doc.setFontSize(fontSize);
+    const { word } = pdfMainAnswerWord(answer);
+    return doc.splitTextToSize(`Answer: ${word}`, maxWidth).length;
+}
+
+/** Same low-level pattern as guiding: prefix ink, value colored when yes/no. */
+function pdfDrawMainAnswerLine(doc, answer, x, y, maxWidth, font, fontSize) {
+    doc.setFont(font, 'normal');
+    doc.setFontSize(fontSize);
+    doc.setTextColor(PDF_INK);
+    const prefix = 'Answer: ';
+    doc.text(prefix, x, y);
+    const prefixW = doc.getTextWidth(prefix);
+    const { word, color } = pdfMainAnswerWord(answer);
+    doc.setTextColor(color);
+    doc.text(word, x + prefixW, y, { maxWidth: maxWidth - prefixW });
+    doc.setTextColor(PDF_INK);
 }
 
 /** @param {HTMLElement} element @param {object} q @param {object} answerNode */
@@ -213,10 +353,10 @@ async function downloadAnswersPdf(isEmail) {
         let heightTicker = marginVertical;
         //title
         doc.setFontSize(titleFontSize);
-        doc.setTextColor("#667eea");
+        doc.setTextColor(PDF_TITLE);
         doc.text("Cappacity Assessment", doc.internal.pageSize.getWidth()/2, heightTicker + titleFontSize/2, {maxWidth: pageWidth, align: "center"});
         doc.setFontSize(fontSize);
-        doc.setTextColor("#000");
+        doc.setTextColor(PDF_INK);
         heightTicker += titleLineHeight + 0.5*lineHeight;
         //date
         doc.text(`Date: ${new Date().toLocaleDateString()}`, doc.internal.pageSize.getWidth()/2, heightTicker, {maxWidth: pageWidth, align: "center"});
@@ -231,32 +371,39 @@ async function downloadAnswersPdf(isEmail) {
         doc.text("Answers:", marginHorizontal, heightTicker, {maxWidth: pageWidth});
         heightTicker += 2*lineHeight;
         //questions
-        [...answersJson.answerHistory, answersJson.currentAnswer].forEach(answer => {
-            const qText = `Question: ${questionToPlainLines(questions[answer.index], answer.guidingAnswers).join('\n')}`;
-            const qLen = doc.splitTextToSize(qText, pageWidth-indent).length;
-            const aText = `Answer: ${answer.answer == 0 ? 'YES' : answer.answer == 1 ? 'NO' : answer.answer == 2 ? 'MAYBE' : 'INCOMPLETE'}`;
-            const aLen = doc.splitTextToSize(aText, pageWidth-indent).length;
+        const textMax = pageWidth - indent;
+        const xBody = marginHorizontal + indent;
+        [...answersJson.answerHistory, answersJson.currentAnswer].forEach((answer) => {
+            const qLines = questionToPlainLines(questions[answer.index], answer.guidingAnswers);
+            const qLen = pdfCountQuestionLineRows(doc, qLines, textMax, font, fontSize);
+            const aLen = pdfCountMainAnswerLines(doc, answer, textMax, font, fontSize);
             const nText = answer.notes === '' ? '' : `Notes: ${answer.notes}`;
-            const nLen = nText === '' ? 0 : doc.splitTextToSize(nText, pageWidth-indent).length;
-            //allocate room on page
-            if (heightTicker + lineHeight*(0.2+qLen+aLen+nLen) > pageHeight) {
+            const nLen = nText === '' ? 0 : doc.splitTextToSize(nText, textMax).length;
+            if (heightTicker + lineHeight * (0.2 + qLen + aLen + nLen) > pageHeight) {
                 doc.addPage();
                 heightTicker = marginVertical;
             }
-            //question
-            doc.text(qText, marginHorizontal+indent, heightTicker, {maxWidth: pageWidth-indent});
-            heightTicker += lineHeight*(0.1+qLen);
-            //answer
-            doc.text(aText, marginHorizontal+indent, heightTicker, {maxWidth: pageWidth-indent});
-            heightTicker += lineHeight*(0.1+aLen);
-            //notes
+            heightTicker = pdfDrawQuestionLines(
+                doc,
+                qLines,
+                xBody,
+                heightTicker,
+                textMax,
+                lineHeight,
+                font,
+                fontSize
+            );
+            heightTicker += lineHeight * 0.1;
+            pdfDrawMainAnswerLine(doc, answer, xBody, heightTicker, textMax, font, fontSize);
+            heightTicker += lineHeight * (0.1 + aLen);
             if (nLen > 0) {
-                doc.setFont(font, "italic");
-                doc.text(nText, marginHorizontal+indent, heightTicker, {maxWidth: pageWidth-indent});
-                doc.setFont(font, "normal");
-                heightTicker += lineHeight*(0.1+nLen);
+                doc.setFont(font, 'italic');
+                doc.setTextColor(PDF_INK);
+                doc.text(nText, xBody, heightTicker, { maxWidth: textMax });
+                doc.setFont(font, 'normal');
+                heightTicker += lineHeight * (0.1 + nLen);
             }
-            heightTicker += 0.9*lineHeight;
+            heightTicker += 0.9 * lineHeight;
         });
         let fileName = new Date().toLocaleTimeString() + ' - cappacity log.pdf';
         if (isEmail) {
