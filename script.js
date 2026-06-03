@@ -337,83 +337,12 @@ async function downloadAnswersPdf(isEmail) {
     const buttons = Array.from(document.querySelectorAll("button")).filter(btn => !btn.disabled);
     buttons.forEach(btn => btn.disabled = true);
     try {
-        const doc = new jsPDF({unit: 'pt'});
-        const questions = (await questionsPromise).questions;
-        const answersJson = JSON.parse(saveAnswersJson());
-        const marginHorizontal = 36;
-        const marginVertical = 54;
-        const indent = 36;
-        const pageWidth = doc.internal.pageSize.getWidth() - 2*marginHorizontal;
-        const pageHeight = doc.internal.pageSize.getHeight() - 2*marginVertical;
-        const font = "helvetica";
-        const fontSize = 16;
-        const titleFontSize = 36;
-        const lineHeight = fontSize*doc.getLineHeightFactor();
-        const titleLineHeight = titleFontSize*doc.getLineHeightFactor();
-        let heightTicker = marginVertical;
-        //title
-        doc.setFontSize(titleFontSize);
-        doc.setTextColor(PDF_TITLE);
-        doc.text("Cappacity Assessment", doc.internal.pageSize.getWidth()/2, heightTicker + titleFontSize/2, {maxWidth: pageWidth, align: "center"});
-        doc.setFontSize(fontSize);
-        doc.setTextColor(PDF_INK);
-        heightTicker += titleLineHeight + 0.5*lineHeight;
-        //date
-        doc.text(`Date: ${new Date().toLocaleDateString()}`, doc.internal.pageSize.getWidth()/2, heightTicker, {maxWidth: pageWidth, align: "center"});
-        heightTicker += lineHeight;
-        //time
-        doc.text(`Time: ${new Date().toLocaleTimeString()}`, doc.internal.pageSize.getWidth()/2, heightTicker, {maxWidth: pageWidth, align: "center"});
-        heightTicker += 2*lineHeight;
-        //result
-        doc.text(`Assesment result: ${answersJson.isCapable == 1 ? 'CAPABLE' : answersJson.isCapable == 0 ? 'NOT CAPABLE' : 'INCOMPLETE'}`, marginHorizontal, heightTicker, {maxWidth: pageWidth});
-        heightTicker += lineHeight;
-        //answers
-        doc.text("Answers:", marginHorizontal, heightTicker, {maxWidth: pageWidth});
-        heightTicker += 2*lineHeight;
-        //questions
-        const textMax = pageWidth - indent;
-        const xBody = marginHorizontal + indent;
-        [...answersJson.answerHistory, answersJson.currentAnswer].forEach((answer) => {
-            const qLines = questionToPlainLines(questions[answer.index], answer.guidingAnswers);
-            const qLen = pdfCountQuestionLineRows(doc, qLines, textMax, font, fontSize);
-            const aLen = pdfCountMainAnswerLines(doc, answer, textMax, font, fontSize);
-            const nText = answer.notes === '' ? '' : `Notes: ${answer.notes}`;
-            const nLen = nText === '' ? 0 : doc.splitTextToSize(nText, textMax).length;
-            if (heightTicker + lineHeight * (0.2 + qLen + aLen + nLen) > pageHeight) {
-                doc.addPage();
-                heightTicker = marginVertical;
-            }
-            heightTicker = pdfDrawQuestionLines(
-                doc,
-                qLines,
-                xBody,
-                heightTicker,
-                textMax,
-                lineHeight,
-                font,
-                fontSize
-            );
-            heightTicker += lineHeight * 0.1;
-            pdfDrawMainAnswerLine(doc, answer, xBody, heightTicker, textMax, font, fontSize);
-            heightTicker += lineHeight * (0.1 + aLen);
-            if (nLen > 0) {
-                doc.setFont(font, 'italic');
-                doc.setTextColor(PDF_INK);
-                doc.text(nText, xBody, heightTicker, { maxWidth: textMax });
-                doc.setFont(font, 'normal');
-                heightTicker += lineHeight * (0.1 + nLen);
-            }
-            heightTicker += 0.9 * lineHeight;
-        });
-        let fileName = new Date().toLocaleTimeString() + ' - cappacity log.pdf';
         if (isEmail) {
-            // Prepare the PDF as a blob
-            const pdfBlob = await doc.output('blob', { filename: fileName });
 
             // Form Data to send
             const formData = new FormData();
             formData.append('email', email);
-            formData.append('file', pdfBlob, fileName);
+            formData.append('answers', saveAnswersJson());
 
             await fetch(backendUrl + '/api/sendEmail.php', {
                 method: 'POST',
@@ -433,6 +362,75 @@ async function downloadAnswersPdf(isEmail) {
                 console.error(err);
             });
         } else {
+            const doc = new jsPDF({unit: 'pt'});
+            const questions = (await questionsPromise).questions;
+            const answersJson = JSON.parse(saveAnswersJson());
+            const marginHorizontal = 36;
+            const marginVertical = 54;
+            const indent = 36;
+            const pageWidth = doc.internal.pageSize.getWidth() - 2*marginHorizontal;
+            const pageHeight = doc.internal.pageSize.getHeight() - 2*marginVertical;
+            const font = "helvetica";
+            const fontSize = 16;
+            const titleFontSize = 36;
+            const lineHeight = fontSize*doc.getLineHeightFactor();
+            const titleLineHeight = titleFontSize*doc.getLineHeightFactor();
+            let heightTicker = marginVertical;
+            //title
+            doc.setFontSize(titleFontSize);
+            doc.setTextColor(PDF_TITLE);
+            doc.text("Cappacity Assessment", doc.internal.pageSize.getWidth()/2, heightTicker + titleFontSize/2, {maxWidth: pageWidth, align: "center"});
+            doc.setFontSize(fontSize);
+            doc.setTextColor(PDF_INK);
+            heightTicker += titleLineHeight + 0.5*lineHeight;
+            //date
+            doc.text(`Date: ${new Date().toLocaleDateString()}`, doc.internal.pageSize.getWidth()/2, heightTicker, {maxWidth: pageWidth, align: "center"});
+            heightTicker += lineHeight;
+            //time
+            doc.text(`Time: ${new Date().toLocaleTimeString()}`, doc.internal.pageSize.getWidth()/2, heightTicker, {maxWidth: pageWidth, align: "center"});
+            heightTicker += 2*lineHeight;
+            //result
+            doc.text(`Assesment result: ${answersJson.isCapable == 1 ? 'CAPABLE' : answersJson.isCapable == 0 ? 'NOT CAPABLE' : 'INCOMPLETE'}`, marginHorizontal, heightTicker, {maxWidth: pageWidth});
+            heightTicker += lineHeight;
+            //answers
+            doc.text("Answers:", marginHorizontal, heightTicker, {maxWidth: pageWidth});
+            heightTicker += 2*lineHeight;
+            //questions
+            const textMax = pageWidth - indent;
+            const xBody = marginHorizontal + indent;
+            [...answersJson.answerHistory, answersJson.currentAnswer].forEach((answer) => {
+                const qLines = questionToPlainLines(questions[answer.index], answer.guidingAnswers);
+                const qLen = pdfCountQuestionLineRows(doc, qLines, textMax, font, fontSize);
+                const aLen = pdfCountMainAnswerLines(doc, answer, textMax, font, fontSize);
+                const nText = answer.notes === '' ? '' : `Notes: ${answer.notes}`;
+                const nLen = nText === '' ? 0 : doc.splitTextToSize(nText, textMax).length;
+                if (heightTicker + lineHeight * (0.2 + qLen + aLen + nLen) > pageHeight) {
+                    doc.addPage();
+                    heightTicker = marginVertical;
+                }
+                heightTicker = pdfDrawQuestionLines(
+                    doc,
+                    qLines,
+                    xBody,
+                    heightTicker,
+                    textMax,
+                    lineHeight,
+                    font,
+                    fontSize
+                );
+                heightTicker += lineHeight * 0.1;
+                pdfDrawMainAnswerLine(doc, answer, xBody, heightTicker, textMax, font, fontSize);
+                heightTicker += lineHeight * (0.1 + aLen);
+                if (nLen > 0) {
+                    doc.setFont(font, 'italic');
+                    doc.setTextColor(PDF_INK);
+                    doc.text(nText, xBody, heightTicker, { maxWidth: textMax });
+                    doc.setFont(font, 'normal');
+                    heightTicker += lineHeight * (0.1 + nLen);
+                }
+                heightTicker += 0.9 * lineHeight;
+            });
+            let fileName = new Date().toLocaleTimeString() + ' - cappacity log.pdf';
             doc.save(fileName);
         }
     } finally {
